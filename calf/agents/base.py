@@ -1,0 +1,1 @@
+"""BaseAgent abstract class."""

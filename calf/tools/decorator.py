@@ -1,0 +1,1 @@
+"""Tool decorator implementation."""
