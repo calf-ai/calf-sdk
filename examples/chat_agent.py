@@ -12,14 +12,26 @@ Run:
 
 import asyncio
 
-from calf import Agent
+from calf import Agent, Calf, MemoryStateStore, OpenAIClient
 
+
+# ============== Calf SETUP ==============
+
+calf = Calf()
+state_store = MemoryStateStore()
+model_client = OpenAIClient()
+
+
+# ============== AGENT ==============
 
 agent = Agent(
     name="chat",
     model="gpt-4o-mini",
     system_prompt="You are a helpful, friendly assistant.",
 )
+
+# Register agent with Calf runtime
+calf.register(agent, state_store=state_store, model_client=model_client)
 
 
 async def main() -> None:

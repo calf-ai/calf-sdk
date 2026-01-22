@@ -2,7 +2,7 @@
 Agent with parallel tool execution for location queries.
 
 Demonstrates:
-- Tool definition with @tool decorator
+- Tool definition with @calf.tool decorator
 - Parallel tool execution (both tools run simultaneously)
 - Event-driven performance advantage over sequential execution
 
@@ -13,7 +13,17 @@ Run:
 import asyncio
 from datetime import datetime
 
-from calf import Agent, tool, RunContext
+from calf import Agent, tool, RunContext, Calf, MemoryStateStore, OpenAIClient
+
+
+# ============== Calf SETUP ==============
+
+calf = Calf()
+state_store = MemoryStateStore()
+model_client = OpenAIClient()
+
+
+# ============== TOOLS ==============
 
 
 @calf.tool
@@ -82,6 +92,9 @@ agent = Agent(
         "comprehensive weather and time information."
     ),
 )
+
+# Register agent with Calf runtime
+calf.register(agent, state_store=state_store, model_client=model_client)
 
 
 async def main() -> None:

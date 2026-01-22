@@ -13,10 +13,22 @@ Run:
 
 import asyncio
 
-from calf import Calf, Agent, GroupChat, tool, RunContext
+from calf import (
+    Calf,
+    Agent,
+    GroupChat,
+    tool,
+    RunContext,
+    MemoryStateStore,
+    OpenAIClient,
+)
 
+
+# ============== Calf SETUP ==============
 
 calf = Calf()
+state_store = MemoryStateStore()
+model_client = OpenAIClient()
 
 
 # ============== TOOLS ==============
@@ -114,7 +126,7 @@ chat = GroupChat(
     name="brainstorm",
     agents=[visionary, pragmatist, critic],
 )
-chat.register(calf)
+calf.register(chat)
 
 
 # ============== MAIN ==============

@@ -39,15 +39,15 @@ The following design decisions have been reviewed and confirmed:
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| **Agent definition style** | Functional with constructor tools | Universal pattern across AI frameworks; `Agent(tools=[...])` + `@agent.tool` |
+| **Agent definition style** | Functional with constructor tools | Universal pattern across AI frameworks; `Agent(tools=[...])` + `@calf.tool` |
 | **Channel naming** | `calf.agent.{name}.{event}` | Namespaced with `calf.` prefix for clarity |
-| **Team API** | `Team` + `Process` enum | Clear pattern matching CrewAI; deferred to future iteration |
+| **GroupChat API** | `GroupChat` + `Process` enum | Clear pattern matching CrewAI; deferred to future iteration |
 | **Workflow API** | Simpler builder pattern (TBD) | Deferred to future iteration |
 | **Memory system** | Interface (ABC) only | User implements their own backends |
 | **StateStore interface** | ABC with agent-specific methods | Explicit inheritance, clear contract |
 | **StateStore implementation** | In-memory only (initial) | Production backends (Redis) deferred |
 | **Handoff mechanism** | `handoff()` return type | Deferred to future iteration |
-| **Initial scope** | Agent + Tools only | Teams, Workflows, Handoffs deferred |
+| **Initial scope** | Agent + Tools only | GroupChat, Workflows, Handoffs deferred |
 
 ---
 
@@ -72,7 +72,7 @@ The first iteration focuses on the **core Agent and Tool system** only:
 - OpenAI-compatible model client
 
 **Deferred to future iterations:**
-- Multi-agent Teams with Process types (sequential, hierarchical, swarm)
+- Multi-agent GroupChat with Process types (sequential, hierarchical, swarm)
 - Graph-based Workflows
 - Handoff mechanism between agents
 - Production state stores (Redis, PostgreSQL)
@@ -161,15 +161,20 @@ print(result.output.summary)  # IDE autocomplete works!
 The functional API uses `Agent()` with **constructor-based tool attachment** as the primary pattern:
 
 ```python
-from calf import Agent, tool, RunContext
+from calf import Agent, Calf, tool, RunContext
 
-# Define reusable tools with @tool decorator
-@tool
+# Setup Calf runtime
+calf = Calf()
+state_store = MemoryStateStore()
+model_client = OpenAIClient()
+
+# Define reusable tools with @calf.tool decorator
+@calf.tool
 async def search_web(ctx: RunContext, query: str) -> str:
     """Search the web for information."""
     return await do_search(query)
 
-@tool
+@calf.tool
 async def fetch_url(ctx: RunContext, url: str) -> str:
     """Fetch content from a URL."""
     return await http_get(url)
@@ -182,17 +187,20 @@ agent = Agent(
     system_prompt="You are a research assistant.",
 )
 
-# Additional tools can be added via decorator
-@agent.tool
+# Register agent with Calf runtime
+calf.register(agent, state_store=state_store, model_client=model_client)
+
+# Additional tools can be added via decorator on Calf
+@calf.tool
 async def save_result(ctx: RunContext, data: str) -> str:
-    """Save result - only this agent has this tool."""
+    """Save result - available to all agents."""
     return await save_to_db(data)
 
-# Or added later
+# Or added later to specific agent
 agent.add_tool(another_tool)
 ```
 
-**Rationale**: Constructor-based tools is the universal pattern across AI frameworks (AutoGen, LlamaIndex, OpenAI Swarm, Agents SDK). The `@agent.tool` decorator provides flexibility for agent-specific tools.
+**Rationale**: Constructor-based tools is the universal pattern across AI frameworks (AutoGen, LlamaIndex, OpenAI Swarm, Agents SDK). The `@calf.tool` decorator provides flexibility for registering tools with the broker.
 
 ### 4. Kafka-Native Patterns
 
@@ -215,7 +223,7 @@ The design follows Kafka best practices:
 ┌─────────────────────────────────────────────────────────────────┐
 │                        User Application                         │
 ├─────────────────────────────────────────────────────────────────┤
-│  Teams / Workflows                                              │
+│  GroupChat / Workflows                                          │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
 │  │ Sequential  │  │Hierarchical │  │   Graph     │             │
 │  └─────────────┘  └─────────────┘  └─────────────┘             │
@@ -251,13 +259,13 @@ calf/
 │
 ├── tools/                   # NEW: Tool system
 │   ├── __init__.py          # tool, handoff, ToolDefinition
-│   ├── decorator.py         # @tool and @agent.tool implementations
+│   ├── decorator.py         # @calf.tool implementation
 │   ├── schema.py            # OpenAI-compatible schema generation
 │   └── registry.py          # Tool registration and lookup
 │
-├── teams/                   # NEW: Multi-agent coordination
-│   ├── __init__.py          # Team, Process
-│   ├── team.py              # Team orchestration
+├── group_chat/              # NEW: Multi-agent coordination
+│   ├── __init__.py          # GroupChat, Process
+│   ├── chat.py              # GroupChat orchestration
 │   ├── process.py           # Sequential, Hierarchical, Swarm
 │   └── handoff.py           # Handoff type and helpers
 │
@@ -301,8 +309,13 @@ The primary abstraction for AI entities. Agents are typed containers that encaps
 - **Output type**: Structured output schema
 
 ```python
-from calf import Agent, RunContext
+from calf import Agent, Calf, tool, RunContext, MemoryStateStore, OpenAIClient
 from pydantic import BaseModel
+
+# Setup Calf runtime
+calf = Calf()
+state_store = MemoryStateStore()
+model_client = OpenAIClient()
 
 class SearchDeps(BaseModel):
     api_key: str
@@ -318,7 +331,10 @@ researcher = Agent[SearchDeps, SearchResult](
     output_type=SearchResult,
 )
 
-@researcher.tool
+# Register agent with Calf runtime
+calf.register(researcher, state_store=state_store, model_client=model_client)
+
+@calf.tool
 async def search_web(ctx: RunContext[SearchDeps], query: str) -> str:
     """Search the web for information."""
     # ctx.deps.api_key is typed!
@@ -345,7 +361,7 @@ Dependency injection container passed to tools. Provides:
 - **emit()**: Emit events to the broker (for advanced use)
 
 ```python
-@agent.tool
+@calf.tool
 async def save_to_db(ctx: RunContext[MyDeps], data: str) -> str:
     """Save data to database."""
     # Typed access to dependencies
@@ -536,7 +552,7 @@ Tools are automatically converted to event handlers:
 
 ```python
 # User writes:
-@agent.tool
+@calf.tool
 async def search_web(ctx: RunContext[MyDeps], query: str) -> str:
     """Search the web."""
     return await do_search(query)
@@ -662,26 +678,26 @@ await calf.emit(
 )
 ```
 
-### Teams
+### GroupChat
 
-Teams coordinate multiple agents for complex tasks:
+GroupChat coordinates multiple agents for complex tasks:
 
 ```python
-from calf import Team, Process, Agent
+from calf import GroupChat, Process, Agent
 
 researcher = Agent(name="researcher", ...)
 writer = Agent(name="writer", ...)
 editor = Agent(name="editor", ...)
 
 # Sequential: Each agent runs in order
-sequential_team = Team(
+sequential_chat = GroupChat(
     name="content_team",
     agents=[researcher, writer, editor],
     process=Process.sequential,
 )
 
 # Hierarchical: Manager delegates and synthesizes
-hierarchical_team = Team(
+hierarchical_chat = GroupChat(
     name="research_team",
     agents=[researcher, writer, editor],
     process=Process.hierarchical,
@@ -689,7 +705,7 @@ hierarchical_team = Team(
 )
 
 # Swarm: Agents hand off based on their own judgment
-swarm_team = Team(
+swarm_chat = GroupChat(
     name="support_team",
     agents=[triage, sales, support],
     process=Process.swarm,
@@ -933,8 +949,8 @@ from calf.providers import ModelClient, OpenAIClient
 ### Future Exports (Deferred)
 
 ```python
-# Teams (Future)
-from calf.teams import Team, Process
+# GroupChat (Future)
+from calf.group_chat import GroupChat, Process
 
 # Workflows (Future)
 from calf.workflows import Workflow, State
@@ -970,15 +986,6 @@ class Agent[Deps, Output]:
     # Add tools after construction
     def add_tool(self, tool: ToolDefinition) -> None: ...
 
-    # Register with Calf runtime
-    def register(
-        self,
-        calf: Calf,
-        deps: Deps,
-        state_store: StateStore,
-        model_client: ModelClient,
-    ) -> None: ...
-
     # Execute agent (request-reply pattern)
     async def run(
         self,
@@ -998,12 +1005,12 @@ class Agent[Deps, Output]:
     async def load_state(self, state: dict) -> None: ...
 ```
 
-### Team API (Future)
+### GroupChat API (Future)
 
-> **Note:** Team API is deferred to a future iteration.
+> **Note:** GroupChat API is deferred to a future iteration.
 
 ```python
-class Team:
+class GroupChat:
     def __init__(
         self,
         name: str,
@@ -1013,8 +1020,8 @@ class Team:
         entry_point: Agent | None = None,
     ) -> None: ...
 
-    async def run(self, task: str) -> TeamOutput: ...
-    async def run_stream(self, task: str) -> AsyncIterator[TeamEvent]: ...
+    async def run(self, task: str) -> GroupChatOutput: ...
+    async def run_stream(self, task: str) -> AsyncIterator[GroupChatEvent]: ...
 
 class Process(Enum):
     sequential = "sequential"      # Agents run in order
@@ -1042,24 +1049,24 @@ class Process(Enum):
 **Deliverables**:
 - `Agent` class with generic type parameters `Agent[Deps, Output]`
 - Constructor-based tool attachment (`tools=[]` parameter)
-- `@tool` decorator for standalone tool definition
-- `@agent.tool` decorator for agent-specific tools
+- `@calf.tool` decorator for tool definition
 - `RunContext` for dependency injection in tools
 - `StateStore` ABC with `MemoryStateStore` implementation
 - `OpenAIClient` model provider
+- `calf.register(agent, state_store, model_client)` for agent registration
 - Event handlers for inference and tools
 - Request-reply via correlation IDs
 - Basic tests and documentation
 
 ### Iteration 2: Multi-Agent Coordination (Future)
 
-**Scope**: Handoffs and basic team patterns
+**Scope**: Handoffs and basic group chat patterns
 
 **Deliverables**:
 - `handoff` return type for agent-to-agent transfers
-- `Team` class with `Process.sequential` and `Process.swarm`
+- `GroupChat` class with `Process.sequential` and `Process.swarm`
 - Inter-agent event routing
-- Team-level state management
+- GroupChat-level state management
 
 ### Iteration 3: Advanced Coordination (Future)
 
