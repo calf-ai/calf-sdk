@@ -17,8 +17,8 @@ class OpenAIClient(ModelClient):
 
     def __init__(
         self,
-        *,
         model: str,
+        *,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         create_kwargs: Dict[str, Any] = {},
