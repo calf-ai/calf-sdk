@@ -39,6 +39,6 @@ async def test_simple_listen():
     print("\n\n===Start test===")
     node = TestCalfNode()
     async with TestKafkaBroker(node.calf) as br:
-        test_msg = "hello there"
+        test_msg = "LeTestSimple"
         print(f"Writing to test_topic_1 with msg={test_msg}")
         await br.publish(test_msg, topic="test_topic_1")
