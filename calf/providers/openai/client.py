@@ -1,7 +1,7 @@
 """OpenAI-compatible model client."""
 
-from collections.abc import Callable
-from typing import Any, Awaitable
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 from openai import AsyncOpenAI, omit
 from openai.types.chat import ChatCompletion, ChatCompletionMessageParam, ChatCompletionToolParam

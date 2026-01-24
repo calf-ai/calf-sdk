@@ -19,9 +19,7 @@ from calf import (
     MemoryStateStore,
     OpenAIClient,
     RunContext,
-    tool,
 )
-
 
 # ============== Calf SETUP ==============
 

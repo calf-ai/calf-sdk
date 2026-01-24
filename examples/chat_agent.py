@@ -15,12 +15,11 @@ import asyncio
 from calf import Agent, Calf, InMemoryStateStore
 from calf.providers.openai.client import OpenAIClient
 
-
 # ============== Calf SETUP ==============
 
 calf = Calf()
 state_store = InMemoryStateStore()
-model_client = OpenAIClient('gpt-5-nano', create_kwargs={'reasoning_effort': 'minimal'})
+model_client = OpenAIClient("gpt-5-nano", create_kwargs={"reasoning_effort": "minimal"})
 
 
 # ============== AGENT ==============
