@@ -1,5 +1,6 @@
+import pytest
 from faststream import FastStream
-from faststream.kafka import KafkaBroker
+from faststream.kafka import KafkaBroker, TestKafkaBroker
 
 broker = KafkaBroker("localhost:9092")
 app = FastStream(broker)
@@ -14,11 +15,7 @@ async def handle(
     assert name == "John"
     assert user_id == 1
     print("Finished handling")
-    
-import pytest
-from pydantic import ValidationError
 
-from faststream.kafka import TestKafkaBroker
 
 @pytest.mark.asyncio
 async def test_handle():

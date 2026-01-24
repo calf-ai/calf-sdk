@@ -14,15 +14,13 @@ Run:
 import asyncio
 
 from calf import (
-    Calf,
     Agent,
+    Calf,
     GroupChat,
-    tool,
-    RunContext,
     MemoryStateStore,
     OpenAIClient,
+    RunContext,
 )
-
 
 # ============== Calf SETUP ==============
 
