@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Event-driven SDK for building AI workflows on Kafka"
 requires-python = ">=3.10"
 dependencies = [
-    "aiokafka>=0.10.0,<0.13.0",
+    "aiokafka>=0.10.0,<0.14.0",
     "boltons>=25.0.0",
     "faststream[cli]>=0.6.0",
     "litellm>=1.81.1",
