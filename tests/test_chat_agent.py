@@ -3,12 +3,12 @@ import itertools
 from typing import Annotated
 
 import pytest
+from calf.agents.chat import Chat
+from calf.context.event import EventContext
 from dotenv import load_dotenv
 from faststream import Context
 from faststream.kafka import TestKafkaBroker
 
-from calf.agents.chat import Chat
-from calf.context.schema import EventContext
 from calf.providers.openai.client import OpenAIClient
 from calf.runtime import CalfRuntime
 
@@ -16,7 +16,7 @@ load_dotenv()
 
 CalfRuntime.initialize()
 
-client = OpenAIClient("gpt-5-nano", create_kwargs={'reasoning_effort': 'minimal'})
+client = OpenAIClient("gpt-5-nano", create_kwargs={"reasoning_effort": "minimal"})
 chat = Chat(client)
 
 # async test syncing purposes

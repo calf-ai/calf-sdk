@@ -1,0 +1,20 @@
+from typing import Literal
+
+from pydantic_ai import ModelMessage
+from pydantic_ai.models import ModelRequestParameters
+
+from calf.models.types import CompactBaseModel, SerializableModelSettings, ToolCallRequest
+
+
+class EventEnvelope(CompactBaseModel):
+    kind: Literal["tool_call_request", "user_prompt", "ai_response", "tool_result"]
+    text: str | None = None
+    latest_message: ModelMessage | None = None
+    trace_id: str | None = None
+
+    # Used to surface the tool call from latest message so tool call workers do not have to dig
+    tool_call_request: ToolCallRequest | None = None
+
+    # Optional inference-time patch in settings and parameters
+    patch_model_request_params: ModelRequestParameters | None = None
+    patch_model_settings: SerializableModelSettings | None = None
