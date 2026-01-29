@@ -1,4 +1,3 @@
-from httpx import Timeout
 from pydantic_ai.models import Model
 
 from calf.agents.base_node_runner import BaseNodeRunner

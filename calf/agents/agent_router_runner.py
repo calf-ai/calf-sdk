@@ -1,4 +1,5 @@
-from typing import Annotated, Awaitable, Callable
+from collections.abc import Awaitable, Callable
+from typing import Annotated
 
 from faststream import Context
 from pydantic_ai import ModelRequest, ModelResponse
@@ -81,7 +82,8 @@ class AgentRouterRunner(Registrator):
     ) -> None:
         tool_topic = self.tools_topic_registry.get(generated_tool_call.tool_name)
         if tool_topic is None:
-            # TODO: implement a short circuit to respond with an error message for when provided tool does not exist.
+            # TODO: implement a short circuit to respond with an
+            # error message for when provided tool does not exist.
             return
         event_envelope = event_envelope.model_copy(
             update={"kind": "tool_call_request", "tool_call_request": generated_tool_call}

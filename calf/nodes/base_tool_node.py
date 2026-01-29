@@ -1,6 +1,6 @@
 import inspect
 from abc import ABC, abstractmethod
-from typing import Awaitable, Callable
+from collections.abc import Awaitable, Callable
 
 from pydantic_ai import ModelRequest, Tool, ToolDefinition, ToolReturnPart
 

@@ -1,7 +1,7 @@
 import functools
 import inspect
 import itertools
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any

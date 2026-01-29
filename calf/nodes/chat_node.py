@@ -13,7 +13,8 @@ class ChatNode(BaseNode, ABC):
     """Entity for defining llm chat node internal wiring.
     Separate from any logic for LLM persona or behaviour."""
 
-    # TODO: a separate layer of abstraction for LLM behaviour and persona. i.e. memory, prompting, etc.
+    # TODO: a separate layer of abstraction for LLM behaviour
+    # and persona. i.e. memory, prompting, etc.
 
     on_enter_topic = "ai_prompted"
     post_to_topic = "ai_generated"

@@ -1,10 +1,8 @@
 """Abstract ProviderClient protocol for LLM providers."""
 
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
-from typing import Any, Callable, Generic, Self, TypedDict, TypeVar
-
-from pydantic import BaseModel
+from collections.abc import Callable, Sequence
+from typing import Any, Generic, TypedDict, TypeVar
 
 MessageT = TypeVar("MessageT")
 ToolT = TypeVar("ToolT")
@@ -40,7 +38,8 @@ class GenerateResult(ABC):
 
 
 class MessageAdaptor(ABC, Generic[MessageT]):
-    """Base message adaptor class to translate defined input to generic provider's message object."""
+    """Base message adaptor class to translate defined
+    input to generic provider's message object."""
 
     @classmethod
     @abstractmethod
@@ -73,7 +72,9 @@ class ToolAdaptor(ABC, Generic[ToolT]):
     def create_tool_schema(cls, tool: Callable | BasicToolSchema) -> ToolT: ...
 
 
-class ProviderClient(MessageAdaptor[MessageT], ToolAdaptor[ToolT], ABC, Generic[MessageT, ToolT, ResponseT]):
+class ProviderClient(
+    MessageAdaptor[MessageT], ToolAdaptor[ToolT], ABC, Generic[MessageT, ToolT, ResponseT]
+):
     """Abstract base class for LLM model clients.
 
     Implementations must support OpenAI-compatible chat completion APIs.

@@ -1,7 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Any, Sequence
-
-from pydantic_ai import ToolDefinition
 
 from calf.models.event_envelope import EventEnvelope
 

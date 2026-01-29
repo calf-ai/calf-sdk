@@ -10,7 +10,6 @@ from pydantic_ai import ModelResponse
 from pydantic_ai.messages import ModelRequest
 
 from calf.agents.agent_router_runner import AgentRouterRunner
-from calf.agents.base_node_runner import BaseNodeRunner
 from calf.agents.chat_runner import ChatRunner
 from calf.agents.tool_runner import ToolRunner
 from calf.broker.broker import Broker
@@ -106,7 +105,7 @@ async def test_simple_chat(deploy_broker):
 @pytest.mark.asyncio
 async def test_agent(deploy_broker):
     broker, router = deploy_broker
-    async with TestKafkaBroker(broker) as br:
+    async with TestKafkaBroker(broker) as _:
         print(f"\n\n{'=' * 10}Start{'=' * 10}")
 
         trace_id = str(next(counter))

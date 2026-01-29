@@ -1,4 +1,5 @@
-from typing import Annotated, Awaitable, Callable
+from collections.abc import Awaitable, Callable
+from typing import Annotated
 
 from faststream import Context
 from pydantic_ai import ModelRequest, ModelResponse
@@ -70,7 +71,8 @@ class AgentRouterNode(BaseNode):
     ) -> None:
         tool_topic = self.topic_to_tool_registry.get(generated_tool_call.tool_name)
         if tool_topic is None:
-            # TODO: implement a short circuit to respond with an error message for when provided tool does not exist.
+            # TODO: implement a short circuit to respond with an
+            # error message for when provided tool does not exist.
             return
 
         await broker.publish(

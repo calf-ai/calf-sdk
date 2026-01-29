@@ -1,4 +1,5 @@
-from abc import ABC
+from abc import ABC, abstractmethod
+from typing import Any
 
 from calf.experimental.handler_repo import HandlerRepo
 
@@ -19,6 +20,3 @@ class BaseNode2(ABC):
 
     def get_handler_repo(self) -> HandlerRepo:
         return self.handler_repo
-    
-if __name__ == "__main__":
-    class Test(BaseNode2)
