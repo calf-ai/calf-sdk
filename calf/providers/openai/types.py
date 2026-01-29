@@ -28,7 +28,8 @@ class OpenAIToolCall(ToolCall):
 class OpenAIClientResponse(GenerateResult):
     """OpenAI-specific response wrapping ChatCompletion."""
 
-    # TODO: define an interface for the client response for users to extract the client-compliant assistant message-typed objects
+    # TODO: define an interface for the client response for users to extract
+    # the client-compliant assistant message-typed objects
     def __init__(self, response: ChatCompletion):
         message = response.choices[0].message
         tool_calls = (

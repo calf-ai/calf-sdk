@@ -1,15 +1,13 @@
 """OpenAI-compatible model client."""
 
 from collections.abc import Awaitable, Callable
-from typing import Any, cast
+from typing import cast
 
 from openai import AsyncOpenAI, omit
 from openai.types.chat import (
     ChatCompletion,
     ChatCompletionMessageParam,
-    ChatCompletionToolMessageParam,
     ChatCompletionToolParam,
-    ChatCompletionUserMessageParam,
 )
 
 from calf.providers.base import ProviderClient

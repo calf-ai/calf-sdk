@@ -1,5 +1,4 @@
 from httpx import Timeout
-from pydantic_ai.models import Model
 from pydantic_ai.models.openai import OpenAIChatModel, OpenAIChatModelSettings
 from pydantic_ai.providers.openai import OpenAIProvider
 
@@ -11,6 +10,7 @@ class OpenAIModelClient(OpenAIChatModel):
         *,
         base_url: str | None = None,
         api_key: str | None = None,
+        reasoning_effort: str | None = None,
         max_tokens: int | None = None,
         temperature: float | None = None,
         top_p: float | None = None,
@@ -26,6 +26,8 @@ class OpenAIModelClient(OpenAIChatModel):
         **kwargs,
     ):
         settings_kwargs: dict[str, object] = {}
+        if reasoning_effort is not None:
+            settings_kwargs["openai_reasoning_effort"] = reasoning_effort
         if max_tokens is not None:
             settings_kwargs["max_tokens"] = max_tokens
         if temperature is not None:

@@ -1,7 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Any
-
-from pydantic_ai import ToolDefinition
 
 from calf.models.event_envelope import EventEnvelope
 
@@ -17,9 +14,3 @@ class BaseNode(ABC):
     @classmethod
     @abstractmethod
     def get_post_to_topic(cls) -> str: ...
-
-
-class BaseToolNode(BaseNode, ABC):
-    @classmethod
-    @abstractmethod
-    def tool_schema(cls) -> ToolDefinition: ...

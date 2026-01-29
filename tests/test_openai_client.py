@@ -7,8 +7,6 @@ import pytest
 from dotenv import load_dotenv
 from openai.types.chat import (
     ChatCompletionAssistantMessageParam,
-    ChatCompletionMessageParam,
-    ChatCompletionToolParam,
 )
 
 from calf.providers.openai import OpenAIClient
