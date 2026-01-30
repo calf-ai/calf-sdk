@@ -6,7 +6,7 @@ from pydantic_ai.direct import model_request
 from pydantic_ai.models import Model, ModelRequestParameters
 
 from calf.models.event_envelope import EventEnvelope
-from calf.nodes.base_node import BaseNode
+from calf.nodes.base_node import BaseNode, publish_to, subscribe_to
 
 
 class ChatNode(BaseNode, ABC):
@@ -16,8 +16,8 @@ class ChatNode(BaseNode, ABC):
     # TODO: a separate layer of abstraction for LLM behaviour
     # and persona. i.e. memory, prompting, etc.
 
-    on_enter_topic = "ai_prompted"
-    post_to_topic = "ai_generated"
+    _on_enter_topic_name = "ai_prompted"
+    _post_to_topic_name = "ai_generated"
 
     def __init__(
         self,
@@ -30,7 +30,9 @@ class ChatNode(BaseNode, ABC):
         self.request_parameters = request_parameters
         super().__init__(**kwargs)
 
-    async def on_enter(self, event_envelope: EventEnvelope):
+    @subscribe_to(_on_enter_topic_name)
+    @publish_to(_post_to_topic_name)
+    async def _call_llm(self, event_envelope: EventEnvelope):
         if self.model_client is None:
             raise RuntimeError("Unable to handle incoming request because Model client is None.")
         if event_envelope.latest_message_in_history is None:
@@ -47,11 +49,3 @@ class ChatNode(BaseNode, ABC):
             update={"kind": "ai_response", "node_result_message": model_response}
         )
         return return_envelope
-
-    @classmethod
-    def get_on_enter_topic(cls) -> str:
-        return cls.on_enter_topic
-
-    @classmethod
-    def get_post_to_topic(cls) -> str:
-        return cls.post_to_topic

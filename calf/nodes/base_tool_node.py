@@ -5,7 +5,7 @@ from collections.abc import Awaitable, Callable
 from pydantic_ai import ModelRequest, Tool, ToolDefinition, ToolReturnPart
 
 from calf.models.event_envelope import EventEnvelope
-from calf.nodes.base_node import BaseNode
+from calf.nodes.base_node import BaseNode, publish_to, subscribe_to
 
 
 class BaseToolNode(BaseNode, ABC):
@@ -14,13 +14,14 @@ class BaseToolNode(BaseNode, ABC):
     def tool_schema(cls) -> ToolDefinition: ...
 
 
-def function_tool(func: Callable | Callable[..., Awaitable]) -> BaseToolNode:
+def agent_tool(func: Callable | Callable[..., Awaitable]) -> BaseToolNode:
     """tool decorator"""
     tool = Tool(func)
 
     class ToolNode(BaseToolNode):
-        @classmethod
-        async def on_enter(cls, event_envelope: EventEnvelope):
+        @subscribe_to("tool_node.{func.__name__}.request")
+        @publish_to("tool_node.{func.__name__}.result")
+        async def on_enter(self, event_envelope: EventEnvelope):
             if not event_envelope.tool_call_request:
                 raise RuntimeError("No tool call request found")
             tool_cal_req = event_envelope.tool_call_request
@@ -44,14 +45,6 @@ def function_tool(func: Callable | Callable[..., Awaitable]) -> BaseToolNode:
         @classmethod
         def tool_schema(cls) -> ToolDefinition:
             return tool.tool_def
-
-        @classmethod
-        def get_on_enter_topic(cls) -> str:
-            return f"tool_node.{func.__name__}.request"
-
-        @classmethod
-        def get_post_to_topic(cls) -> str:
-            return f"tool_node.{func.__name__}.result"
 
     ToolNode.__name__ = func.__name__
     ToolNode.__qualname__ = func.__qualname__

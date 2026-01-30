@@ -1,5 +1,5 @@
 from typing import TypeAlias
 
-from calf.agents.base_node_runner import BaseNodeRunner
+from calf.agents.base_node_runner import NodeRunner
 
-ToolRunner: TypeAlias = BaseNodeRunner
+ToolRunner: TypeAlias = NodeRunner

@@ -14,6 +14,7 @@ dependencies = [
     "pydantic-ai>=1.47.0",
     "python-dotenv>=1.2.1",
     "typer<0.22",
+    "uuid-utils>=0.14.0",
 ]
 
 [project.optional-dependencies]
