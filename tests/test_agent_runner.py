@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 from faststream import Context
 from faststream.kafka import TestKafkaBroker
 from pydantic_ai import ModelResponse
-from pydantic_ai.messages import ModelRequest
 
 from calf.agents.agent_router_runner import AgentRouterRunner
 from calf.agents.chat_runner import ChatRunner
@@ -24,8 +23,6 @@ load_dotenv()
 counter = itertools.count()
 store: dict[str, asyncio.Queue[EventEnvelope]] = {}
 condition = asyncio.Condition()
-
-collect_topic = "collect"
 
 
 @agent_tool

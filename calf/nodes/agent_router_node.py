@@ -12,6 +12,7 @@ from calf.broker.broker import Broker
 from calf.models.event_envelope import EventEnvelope, ToolCallRequest
 from calf.nodes.base_node import BaseNode, publish_to, subscribe_to
 from calf.nodes.base_tool_node import BaseToolNode
+from calf.stores.base import MessageHistoryStore
 
 
 class AgentRouterNode(BaseNode):
@@ -26,6 +27,7 @@ class AgentRouterNode(BaseNode):
         tool_nodes: list[BaseToolNode],
         system_prompt: str | None = None,
         handoff_nodes: list[type[BaseNode]] = [],
+        message_history_store: MessageHistoryStore | None = None,
         *args,
         **kwargs,
     ):
@@ -33,6 +35,7 @@ class AgentRouterNode(BaseNode):
         self.tools = tool_nodes
         self.handoffs = handoff_nodes
         self.system_prompt = system_prompt
+        self.message_history_store = message_history_store
 
         self.tools_topic_registry: dict[str, str] = {
             tool.tool_schema().name: tool.subscribed_topic
@@ -57,6 +60,10 @@ class AgentRouterNode(BaseNode):
 
         # One place where message history is modified
         ctx.message_history.append(ctx.node_result_message)
+        if self.message_history_store is not None and ctx.thread_id is not None:
+            await self.message_history_store.append(
+                thread_id=ctx.thread_id, message=ctx.node_result_message
+            )
 
         if isinstance(ctx.latest_message_in_history, ModelResponse):
             if (
@@ -69,6 +76,7 @@ class AgentRouterNode(BaseNode):
                 # reply to sender here
                 await self._reply_to_sender(ctx, correlation_id, broker)
         else:
+            # TODO: implement user chat request forwarding to the chat node. So message history can be managed in a central location: the router node
             # tool call result block
             await self._call_model(ctx, correlation_id, broker)
         return ctx
@@ -128,6 +136,7 @@ class AgentRouterNode(BaseNode):
         self,
         user_prompt: str,
         broker: Broker,
+        thread_id: str | None = None,
         correlation_id: str | None = None,
     ) -> str:
         """Invoke the agent

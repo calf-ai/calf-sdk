@@ -30,7 +30,7 @@ Example:
 """
 
 from calf.stores.base import MessageHistoryStore
-from calf.stores.memory import MemoryMessageHistoryStore
+from calf.stores.in_memory import MemoryMessageHistoryStore
 
 __all__ = [
     "MessageHistoryStore",
