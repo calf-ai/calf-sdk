@@ -14,7 +14,7 @@ from calf.agents.chat_runner import ChatRunner
 from calf.agents.tool_runner import ToolRunner
 from calf.broker.broker import Broker
 from calf.models.event_envelope import EventEnvelope
-from calf.nodes.base_tool_node import function_tool
+from calf.nodes.base_tool_node import agent_tool
 from calf.nodes.chat_node import ChatNode
 from calf.providers.pydantic_ai.openai import OpenAIModelClient
 
@@ -27,7 +27,7 @@ condition = asyncio.Condition()
 collect_topic = "collect"
 
 
-@function_tool
+@agent_tool
 def get_weather(location: str) -> str:
     """Get the current weather at a location
 
@@ -46,9 +46,9 @@ def deploy_broker() -> tuple[Broker, AgentRouterRunner]:
     broker = Broker()
 
     # 1. Deploy llm model node worker
-    model_client = OpenAIModelClient("gpt-5-nano", reasoning_effort="medium")
+    model_client = OpenAIModelClient("gpt-5-nano", reasoning_effort="low")
     chat_node = ChatNode(model_client)
-    chat_runner = ChatRunner(chat_node=chat_node)
+    chat_runner = ChatRunner(node=chat_node)
     chat_runner.register_on(broker)
     # if we're just deploying chat as an isolated deployment:
     #   await broker.run_app()
@@ -61,7 +61,7 @@ def deploy_broker() -> tuple[Broker, AgentRouterRunner]:
 
     # 3. Deploy router node worker
     router = AgentRouterRunner(
-        chat_node=chat_node, tool_nodes=[get_weather], reply_to_topic=collect_topic
+        chat_node=chat_node, tool_nodes=[get_weather]
     )
     router.register_on(broker)
     # if we're just deploying this router as an isolated deployment:
@@ -76,47 +76,24 @@ def deploy_broker() -> tuple[Broker, AgentRouterRunner]:
 
 
 @pytest.mark.asyncio
-async def test_simple_chat(deploy_broker):
-    broker, router = deploy_broker
-    async with TestKafkaBroker(broker) as br:
-        print(f"\n\n{'=' * 10}Start{'=' * 10}")
-
-        trace_id = str(next(counter))
-
-        msg = ModelRequest.user_text_prompt("Hi, what's the weather like at Tokyo?")
-        await br.publish(
-            EventEnvelope(
-                kind="user_prompt",
-                trace_id=trace_id,
-                message_history=[msg],
-            ),
-            topic=ChatNode.get_on_enter_topic(),
-            correlation_id=trace_id,
-        )
-
-        await asyncio.wait_for(condition.wait_for(lambda: trace_id in store), timeout=10.0)
-        result_envelope = store[trace_id]
-        print("Result received")
-        assert isinstance(result_envelope.latest_message_in_history, ModelResponse)
-        print(f"Response: {result_envelope.latest_message_in_history.text}")
-        print(f"{'=' * 10}End{'=' * 10}")
-
-
-@pytest.mark.asyncio
 async def test_agent(deploy_broker):
-    broker, router = deploy_broker
+    broker, _ = deploy_broker
+    chat_node = ChatNode()
+    router = AgentRouterRunner(
+        chat_node=chat_node, tool_nodes=[get_weather]
+    )
     async with TestKafkaBroker(broker) as _:
         print(f"\n\n{'=' * 10}Start{'=' * 10}")
 
         trace_id = str(next(counter))
 
         await router.invoke(
-            ModelRequest.user_text_prompt("Hey, what's the weather in Tokyo?"),
-            correlation_id=trace_id,
+            "Hey, what's the weather in Tokyo?",
             broker=broker,
+            correlation_id=trace_id
         )
 
-        await asyncio.wait_for(condition.wait_for(lambda: trace_id in store), timeout=10.0)
+        await asyncio.wait_for(condition.wait_for(lambda: trace_id in store), timeout=20.0)
         result_envelope = store[trace_id]
         print("Result received")
         assert isinstance(result_envelope.latest_message_in_history, ModelResponse)

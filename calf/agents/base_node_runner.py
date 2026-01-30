@@ -3,11 +3,16 @@ from calf.nodes.base_node import BaseNode
 from calf.nodes.registrator import Registrator
 
 
-class BaseNodeRunner(Registrator):
+class NodeRunner(Registrator):
     def __init__(self, node: BaseNode, *args, **kwargs):
         self.node = node
         super().__init__(*args, **kwargs)
 
     def register_on(self, broker: Broker, *args, **kwargs):
-        handler_fn = broker.subscriber(self.node.get_on_enter_topic())(self.node.on_enter)
-        handler_fn = broker.publisher(self.node.get_post_to_topic())(handler_fn)
+        for handler_fn, topics_dict in self.node.bound_registry.items():
+            pub = topics_dict.get("publish_topic")
+            sub = topics_dict.get("subscribe_topic")
+            if pub is not None:
+                handler_fn = broker.publisher(pub)(handler_fn)
+            if sub is not None:
+                handler_fn = broker.subscriber(sub)(handler_fn)

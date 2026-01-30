@@ -1,7 +1,11 @@
 from collections.abc import Awaitable, Callable
-from typing import Annotated
+from typing import Annotated, Any
 
+import uuid_utils
 from faststream import Context
+from faststream.kafka.annotations import (
+    KafkaBroker as BrokerAnnotation,
+)
 from pydantic_ai import ModelRequest, ModelResponse
 from pydantic_ai.models import ModelRequestParameters
 
@@ -15,26 +19,53 @@ from calf.nodes.registrator import Registrator
 class AgentRouterRunner(Registrator):
     """Deployable unit orchestrating the internal routing to operate agents"""
 
+    _router_topic_name = "agent_router"
+
     def __init__(
         self,
         chat_node: BaseNode,
         tool_nodes: list[BaseToolNode],
-        reply_to_topic: str,
         handoff_node_classes: list[type[BaseNode]] = [],
     ):
         self.chat = chat_node
         self.tools = tool_nodes
         self.handoffs = handoff_node_classes
-        self.reply_to_topic = reply_to_topic
 
         self.tools_topic_registry: dict[str, str] = {
-            tool_class.tool_schema().name: tool_class.get_on_enter_topic()
-            for tool_class in tool_nodes
+            tool.tool_schema().name: tool.subscribed_topic
+            for tool in tool_nodes
+            if tool.subscribed_topic is not None
         }
 
-        self.tool_response_topics = [tool.get_post_to_topic() for tool in self.tools]
+        self.tool_response_topics = [tool.publish_to_topic for tool in self.tools]
 
         super().__init__()
+
+    async def _router(
+        self,
+        ctx: EventEnvelope,
+        correlation_id: Annotated[str, Context()],
+        broker: BrokerAnnotation,
+    ):
+        if ctx.node_result_message is None:
+            raise RuntimeError("There is no response message to process")
+
+        # One place where message history is modified
+        ctx.message_history.append(ctx.node_result_message)
+
+        if isinstance(ctx.latest_message_in_history, ModelResponse):
+            if (
+                ctx.latest_message_in_history.finish_reason == "tool_call"
+                or ctx.latest_message_in_history.tool_calls
+            ):
+                for tool_call in ctx.latest_message_in_history.tool_calls:
+                    await self._route_tool(ctx, tool_call, correlation_id, broker)
+            else:
+                # reply to sender here
+                await self._reply_to_sender(ctx, correlation_id, broker)
+        else:
+            # tool call result block
+            await self._call_model(ctx, correlation_id, broker)
 
     def register_on(
         self,
@@ -42,43 +73,17 @@ class AgentRouterRunner(Registrator):
         *,
         gather_func: Callable | Callable[..., Awaitable] | None = None,
     ):
-        async def gather_response(
-            ctx: EventEnvelope,
-            correlation_id: Annotated[str, Context()],
-        ):
-            if ctx.node_result_message is None:
-                raise RuntimeError("There is no response message to process")
-
-            # One place where message history is modified
-            ctx.message_history.append(ctx.node_result_message)
-
-            if isinstance(ctx.latest_message_in_history, ModelResponse):
-                if (
-                    ctx.latest_message_in_history.finish_reason == "tool_call"
-                    or ctx.latest_message_in_history.tool_calls
-                ):
-                    for tool_call in ctx.latest_message_in_history.tool_calls:
-                        await self._route_tool(ctx, tool_call, correlation_id, broker)
-                else:
-                    # reply to sender here
-                    await self._reply_to_sender(ctx, correlation_id, broker)
-            else:
-                # tool call result block
-                await self._call_model(ctx, correlation_id, broker)
-
         if gather_func is None:
-            gather_func = gather_response
+            gather_func = self._router
 
-        for topic in self.tool_response_topics:
-            gather_func = broker.subscriber(topic)(gather_func)
-        gather_func = broker.subscriber(self.chat.get_post_to_topic())(gather_func)
+        gather_func = broker.subscriber(self._router_topic_name)(gather_func)
 
     async def _route_tool(
         self,
         event_envelope: EventEnvelope,
         generated_tool_call: ToolCallRequest,
         correlation_id: str,
-        broker: Broker,
+        broker: Any,
     ) -> None:
         tool_topic = self.tools_topic_registry.get(generated_tool_call.tool_name)
         if tool_topic is None:
@@ -92,15 +97,16 @@ class AgentRouterRunner(Registrator):
             event_envelope,
             topic=tool_topic,
             correlation_id=correlation_id,
+            reply_to=self._router_topic_name,
         )
 
     async def _reply_to_sender(
-        self, event_envelope: EventEnvelope, correlation_id: str, broker: Broker
+        self, event_envelope: EventEnvelope, correlation_id: str, broker: Any
     ) -> None:
         event_envelope = event_envelope.model_copy(update={"kind": "ai_response"})
         await broker.publish(
             event_envelope,
-            topic=self.reply_to_topic,
+            topic="collect",
             correlation_id=correlation_id,
         )
 
@@ -108,7 +114,7 @@ class AgentRouterRunner(Registrator):
         self,
         event_envelope: EventEnvelope,
         correlation_id: str,
-        broker: Broker,
+        broker: Any,
     ) -> None:
         patch_model_request_params = ModelRequestParameters(
             function_tools=[tool.tool_schema() for tool in self.tools]
@@ -118,21 +124,42 @@ class AgentRouterRunner(Registrator):
         )
         await broker.publish(
             event_envelope,
-            topic=self.chat.get_on_enter_topic(),
+            topic=self.chat.subscribed_topic,
             correlation_id=correlation_id,
+            reply_to=self._router_topic_name,
         )
 
-    async def invoke(self, request: ModelRequest, correlation_id: str, broker: Broker) -> None:
+    async def invoke(
+        self,
+        user_prompt: str,
+        broker: Broker,
+        correlation_id: str | None = None,
+    ) -> str:
+        """Invoke the agent
+
+        Args:
+            user_prompt (str): User prompt to request the model
+            broker (Broker): The broker to connect to
+            correlation_id (str | None, optional): Optionally provide a correlation ID
+            for this request. Defaults to None.
+
+        Returns:
+            str: The correlation ID for this request
+        """
         patch_model_request_params = ModelRequestParameters(
             function_tools=[tool.tool_schema() for tool in self.tools]
         )
+        if correlation_id is None:
+            correlation_id = uuid_utils.uuid7().hex
         await broker.publish(
             EventEnvelope(
                 kind="user_prompt",
                 trace_id=correlation_id,
                 patch_model_request_params=patch_model_request_params,
-                message_history=[request],
+                message_history=[ModelRequest.user_text_prompt(user_prompt)],
             ),
-            topic=self.chat.get_on_enter_topic(),
+            topic=self.chat.subscribed_topic or "",
             correlation_id=correlation_id,
+            reply_to=self._router_topic_name,
         )
+        return correlation_id
