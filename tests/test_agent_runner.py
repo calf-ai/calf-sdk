@@ -8,7 +8,7 @@ from faststream import Context
 from faststream.kafka import TestKafkaBroker
 from pydantic_ai import ModelResponse
 
-from calf.agents.node_runner import AgentRouterRunner, ChatRunner, ToolRunner
+from calf.runners.node_runner import AgentRouterRunner, ChatRunner, ToolRunner
 from calf.broker.broker import Broker
 from calf.models.event_envelope import EventEnvelope
 from calf.nodes.agent_router_node import AgentRouterNode
