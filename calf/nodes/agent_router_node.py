@@ -76,8 +76,8 @@ class AgentRouterNode(BaseNode):
                 # reply to sender here
                 await self._reply_to_sender(ctx, correlation_id, broker)
         else:
-            # TODO: implement user chat request forwarding to the chat node. So message history can be managed in a central location: the router node
-            # tool call result block
+            # TODO: implement user chat request forwarding to the chat node
+            # so message history can be managed in a central location: the router node
             await self._call_model(ctx, correlation_id, broker)
         return ctx
 
