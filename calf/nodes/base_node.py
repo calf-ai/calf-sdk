@@ -1,6 +1,6 @@
-from abc import ABC, abstractmethod
+from abc import ABC
+from collections.abc import Callable
 from functools import cached_property
-from typing import Callable
 
 
 def subscribe_to(topic_name):
