@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, TypeAlias
 
 from calf.broker.broker import Broker
 from calf.nodes.base_node import BaseNode
@@ -18,3 +18,8 @@ class NodeRunner(Registrator):
                 handler_fn = broker.publisher(pub)(handler_fn)
             if sub is not None:
                 handler_fn = broker.subscriber(sub)(handler_fn)
+
+
+ChatRunner: TypeAlias = NodeRunner
+ToolRunner: TypeAlias = NodeRunner
+AgentRouterRunner: TypeAlias = NodeRunner

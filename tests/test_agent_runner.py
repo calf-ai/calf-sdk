@@ -8,9 +8,7 @@ from faststream import Context
 from faststream.kafka import TestKafkaBroker
 from pydantic_ai import ModelResponse
 
-from calf.agents.agent_router_runner import AgentRouterRunner
-from calf.agents.chat_runner import ChatRunner
-from calf.agents.tool_runner import ToolRunner
+from calf.agents.node_runner import AgentRouterRunner, ChatRunner, ToolRunner
 from calf.broker.broker import Broker
 from calf.models.event_envelope import EventEnvelope
 from calf.nodes.agent_router_node import AgentRouterNode
@@ -102,7 +100,7 @@ async def test_agent(deploy_broker):
                 print(f"{result_envelope}")
             print("|")
             if result_envelope.kind == "ai_response":
-                assert result_envelope.latest_message_in_history is not None
+                assert isinstance(result_envelope.latest_message_in_history, ModelResponse)
                 assert result_envelope.latest_message_in_history.text is not None
                 assert "snow" in result_envelope.latest_message_in_history.text.lower()
                 break
@@ -139,7 +137,7 @@ async def test_multi_turn_agent(deploy_broker):
                 print(f"{result_envelope}")
             print("|")
             if result_envelope.kind == "ai_response":
-                assert result_envelope.latest_message_in_history is not None
+                assert isinstance(result_envelope.latest_message_in_history, ModelResponse)
                 assert result_envelope.latest_message_in_history.text is not None
                 assert "gpt" in result_envelope.latest_message_in_history.text.lower()
                 break
@@ -158,7 +156,7 @@ async def test_multi_turn_agent(deploy_broker):
                 print(f"{result_envelope}")
             print("|")
             if result_envelope.kind == "ai_response":
-                assert result_envelope.latest_message_in_history is not None
+                assert isinstance(result_envelope.latest_message_in_history, ModelResponse)
                 assert result_envelope.latest_message_in_history.text is not None
                 assert "snow" in result_envelope.latest_message_in_history.text.lower()
                 break
@@ -176,7 +174,7 @@ async def test_multi_turn_agent(deploy_broker):
                 print(f"{result_envelope}")
             print("|")
             if result_envelope.kind == "ai_response":
-                assert result_envelope.latest_message_in_history is not None
+                assert isinstance(result_envelope.latest_message_in_history, ModelResponse)
                 assert result_envelope.latest_message_in_history.text is not None
                 assert "lebron" in result_envelope.latest_message_in_history.text.lower()
                 break
