@@ -64,7 +64,7 @@ def deploy_broker() -> tuple[Broker, AgentRouterRunner]:
         system_prompt="Please always greet the user as Conan before every message",
     )
     router = AgentRouterRunner(node=router_node)
-    router.register_on(broker)
+    router.register_on(broker, max_workers=2)
     # if we're just deploying this router as an isolated deployment:
     #   await broker.run_app()
 
