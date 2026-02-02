@@ -1,5 +1,3 @@
-"""In-memory MessageHistoryStore implementation for testing and development."""
-
 from collections import defaultdict
 
 from pydantic_ai.messages import ModelMessage

@@ -16,7 +16,7 @@ class BaseToolNode(BaseNode, ABC):
 
 
 def agent_tool(func: Callable[..., Any] | Callable[..., Awaitable[Any]]) -> BaseToolNode:
-    """tool decorator"""
+    """Agent tool decorator to turn a function into a deployable node"""
     tool = Tool(func)
 
     class ToolNode(BaseToolNode):

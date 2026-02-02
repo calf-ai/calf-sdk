@@ -18,7 +18,7 @@ from calf.stores.base import MessageHistoryStore
 
 
 class AgentRouterNode(BaseNode):
-    """Deployable unit orchestrating the internal routing to operate agents"""
+    """Logic for the internal routing to operate agents"""
 
     _router_sub_topic_name = "agent_router.input"
     _router_pub_topic_name = "agent_router.output"

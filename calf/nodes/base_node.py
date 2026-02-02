@@ -21,7 +21,8 @@ def publish_to(topic_name: str) -> Callable[[Any], Any]:
 
 
 class BaseNode(ABC):
-    """Effectively, a node is the data plane, defining the internal wiring and logic"""
+    """Effectively a node is the data plane, defining the internal wiring and logic.
+    When provided to a NodeRunner, node logic can be deployed."""
 
     _handler_registry: dict[Callable[..., Any], dict[str, str]] = {}
 
