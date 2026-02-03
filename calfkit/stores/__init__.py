@@ -9,7 +9,7 @@ in event-driven agent systems. It follows these principles:
 * Auto-create: New threads are created automatically on first append
 
 Example:
-    from calf.stores import MemoryMessageHistoryStore
+    from calfkit.stores import MemoryMessageHistoryStore
 
     # Deployment-time configuration
     store = MemoryMessageHistoryStore()
@@ -29,8 +29,8 @@ Example:
     )
 """
 
-from calf.stores.base import MessageHistoryStore
-from calf.stores.in_memory import InMemoryMessageHistoryStore
+from calfkit.stores.base import MessageHistoryStore
+from calfkit.stores.in_memory import InMemoryMessageHistoryStore
 
 __all__ = [
     "MessageHistoryStore",

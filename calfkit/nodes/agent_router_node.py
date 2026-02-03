@@ -8,13 +8,13 @@ from faststream.kafka.annotations import (
 from pydantic_ai import ModelRequest, ModelResponse, SystemPromptPart
 from pydantic_ai.models import ModelRequestParameters
 
-from calf.broker.broker import Broker
-from calf.messages import patch_system_prompts, validate_tool_call_pairs
-from calf.models.event_envelope import EventEnvelope
-from calf.models.types import ToolCallRequest
-from calf.nodes.base_node import BaseNode, publish_to, subscribe_to
-from calf.nodes.base_tool_node import BaseToolNode
-from calf.stores.base import MessageHistoryStore
+from calfkit.broker.broker import Broker
+from calfkit.messages import patch_system_prompts, validate_tool_call_pairs
+from calfkit.models.event_envelope import EventEnvelope
+from calfkit.models.types import ToolCallRequest
+from calfkit.nodes.base_node import BaseNode, publish_to, subscribe_to
+from calfkit.nodes.base_tool_node import BaseToolNode
+from calfkit.stores.base import MessageHistoryStore
 
 
 class AgentRouterNode(BaseNode):

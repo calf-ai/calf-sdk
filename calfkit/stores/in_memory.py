@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from pydantic_ai.messages import ModelMessage
 
-from calf.stores.base import MessageHistoryStore
+from calfkit.stores.base import MessageHistoryStore
 
 
 class InMemoryMessageHistoryStore(MessageHistoryStore):

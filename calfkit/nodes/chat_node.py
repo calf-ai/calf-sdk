@@ -5,8 +5,8 @@ from pydantic_ai import ModelResponse, ModelSettings
 from pydantic_ai.direct import model_request
 from pydantic_ai.models import Model, ModelRequestParameters
 
-from calf.models.event_envelope import EventEnvelope
-from calf.nodes.base_node import BaseNode, publish_to, subscribe_to
+from calfkit.models.event_envelope import EventEnvelope
+from calfkit.nodes.base_node import BaseNode, publish_to, subscribe_to
 
 
 class ChatNode(BaseNode, ABC):

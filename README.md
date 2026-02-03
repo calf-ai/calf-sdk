@@ -51,11 +51,11 @@ pip install git+https://github.com/calf-ai/calf-sdk.git
 
 ```python
 import asyncio
-from calf.nodes import agent_tool, AgentRouterNode, ChatNode
-from calf.providers import OpenAIModelClient
-from calf.stores import InMemoryMessageHistoryStore
-from calf.broker import Broker
-from calf.runners import ChatRunner, ToolRunner, AgentRouterRunner
+from calfkit.nodes import agent_tool, AgentRouterNode, ChatNode
+from calfkit.providers import OpenAIModelClient
+from calfkit.stores import InMemoryMessageHistoryStore
+from calfkit.broker import Broker
+from calfkit.runners import ChatRunner, ToolRunner, AgentRouterRunner
 
 # 1. Define a tool
 @agent_tool

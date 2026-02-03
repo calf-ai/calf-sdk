@@ -4,7 +4,7 @@ from typing import Literal
 from pydantic_ai import ModelMessage, ModelRequest
 from pydantic_ai.models import ModelRequestParameters
 
-from calf.models.types import CompactBaseModel, SerializableModelSettings, ToolCallRequest
+from calfkit.models.types import CompactBaseModel, SerializableModelSettings, ToolCallRequest
 
 
 class EventEnvelope(CompactBaseModel):

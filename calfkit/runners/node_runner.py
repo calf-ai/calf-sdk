@@ -1,8 +1,8 @@
 from typing import Any, TypeAlias
 
-from calf.broker.broker import Broker
-from calf.nodes.base_node import BaseNode
-from calf.nodes.registrator import Registrator
+from calfkit.broker.broker import Broker
+from calfkit.nodes.base_node import BaseNode
+from calfkit.nodes.registrator import Registrator
 
 
 class NodeRunner(Registrator):

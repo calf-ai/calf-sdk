@@ -9,14 +9,14 @@ from faststream import Context
 from faststream.kafka import TestKafkaBroker
 from pydantic_ai import ModelResponse
 
-from calf.broker.broker import Broker
-from calf.models.event_envelope import EventEnvelope
-from calf.nodes.agent_router_node import AgentRouterNode
-from calf.nodes.base_tool_node import agent_tool
-from calf.nodes.chat_node import ChatNode
-from calf.providers.pydantic_ai.openai import OpenAIModelClient
-from calf.runners.node_runner import AgentRouterRunner, ChatRunner, ToolRunner
-from calf.stores.in_memory import InMemoryMessageHistoryStore
+from calfkit.broker.broker import Broker
+from calfkit.models.event_envelope import EventEnvelope
+from calfkit.nodes.agent_router_node import AgentRouterNode
+from calfkit.nodes.base_tool_node import agent_tool
+from calfkit.nodes.chat_node import ChatNode
+from calfkit.providers.pydantic_ai.openai import OpenAIModelClient
+from calfkit.runners.node_runner import AgentRouterRunner, ChatRunner, ToolRunner
+from calfkit.stores.in_memory import InMemoryMessageHistoryStore
 from tests.utils import wait_for_condition
 
 load_dotenv()
