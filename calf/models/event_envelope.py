@@ -35,3 +35,5 @@ class EventEnvelope(CompactBaseModel):
     # Allow client to dynamically patch system message at runtime
     # Intentionally kept separate from message_history in order to simplify patch logic
     system_message: ModelRequest | None = None
+
+    final_response_topic: str

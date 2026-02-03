@@ -25,12 +25,12 @@ class NodeRunner(Registrator):
         for handler_fn, topics_dict in self.node.bound_registry.items():
             pub = topics_dict.get("publish_topic")
             sub = topics_dict.get("subscribe_topic")
-            if pub is not None:
-                handler_fn = broker.publisher(pub, **extra_publish_kwargs)(handler_fn)
             if sub is not None:
                 handler_fn = broker.subscriber(
                     sub, max_workers=max_workers, group_id=group_id, **extra_subscribe_kwargs
                 )(handler_fn)
+            if pub is not None:
+                handler_fn = broker.publisher(pub, **extra_publish_kwargs)(handler_fn)
 
 
 ChatRunner: TypeAlias = NodeRunner

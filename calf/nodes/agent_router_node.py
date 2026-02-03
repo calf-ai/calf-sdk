@@ -9,7 +9,7 @@ from pydantic_ai import ModelRequest, ModelResponse, SystemPromptPart
 from pydantic_ai.models import ModelRequestParameters
 
 from calf.broker.broker import Broker
-from calf.messages import patch_system_prompts
+from calf.messages import patch_system_prompts, validate_tool_call_pairs
 from calf.models.event_envelope import EventEnvelope
 from calf.models.types import ToolCallRequest
 from calf.nodes.base_node import BaseNode, publish_to, subscribe_to
@@ -94,9 +94,7 @@ class AgentRouterNode(BaseNode):
             else:
                 # reply to sender here
                 await self._reply_to_sender(ctx, correlation_id, broker)
-        else:
-            # TODO: implement user chat request forwarding to the chat node
-            # so message history can be managed in a central location: the router node
+        elif validate_tool_call_pairs(ctx.message_history):
             await self._call_model(ctx, correlation_id, broker)
         return ctx
 
@@ -128,7 +126,7 @@ class AgentRouterNode(BaseNode):
         event_envelope = event_envelope.model_copy(update={"kind": "ai_response"})
         await broker.publish(
             event_envelope,
-            topic=self.publish_to_topic,
+            topic=event_envelope.final_response_topic,
             correlation_id=correlation_id,
         )
 
@@ -138,9 +136,11 @@ class AgentRouterNode(BaseNode):
         correlation_id: str,
         broker: Any,
     ) -> None:
-        patch_model_request_params = ModelRequestParameters(
-            function_tools=[tool.tool_schema() for tool in self.tools]
-        )
+        patch_model_request_params = event_envelope.patch_model_request_params
+        if patch_model_request_params is None:
+            patch_model_request_params = ModelRequestParameters(
+                function_tools=[tool.tool_schema() for tool in self.tools]
+            )
         event_envelope = event_envelope.model_copy(
             update={"patch_model_request_params": patch_model_request_params}
         )
@@ -155,6 +155,7 @@ class AgentRouterNode(BaseNode):
         self,
         user_prompt: str,
         broker: Broker,
+        final_response_topic: str,
         thread_id: str | None = None,
         correlation_id: str | None = None,
     ) -> str:
@@ -183,6 +184,7 @@ class AgentRouterNode(BaseNode):
                 thread_id=thread_id,
                 incoming_node_messages=new_node_messages,
                 system_message=self.system_message,
+                final_response_topic=final_response_topic,
             ),
             topic=self.subscribed_topic or "",
             correlation_id=correlation_id,

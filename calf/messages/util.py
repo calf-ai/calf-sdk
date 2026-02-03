@@ -4,7 +4,15 @@ This module provides utilities for working with pydantic_ai ModelMessage types,
 including message history manipulation and transformation.
 """
 
-from pydantic_ai import ModelMessage, ModelRequest, ModelResponse, SystemPromptPart
+from pydantic_ai.messages import (
+    ModelMessage,
+    ModelRequest,
+    ModelResponse,
+    RetryPromptPart,
+    SystemPromptPart,
+    ToolCallPart,
+    ToolReturnPart,
+)
 
 
 def patch_system_prompts(
@@ -58,3 +66,34 @@ def patch_system_prompts(
             result.append(msg)
 
     return [system_msg] + result
+
+
+def validate_tool_call_pairs(messages: list[ModelMessage]) -> bool:
+    """Validate that all tool calls have corresponding tool results.
+
+    Iterates through messages in reverse order to verify that every ToolCallPart
+    has a matching ToolReturnPart or RetryPromptPart with the same tool_call_id.
+
+    The first time a tool call is found without a matching result, the function
+    returns False immediately.
+
+    Args:
+        messages: List of ModelMessage to validate.
+
+    Returns:
+        True if all tool calls have matching results, False otherwise.
+    """
+    seen_result_ids: set[str] = set()
+
+    for message in reversed(messages):
+        if isinstance(message, ModelRequest):
+            for part in message.parts:
+                if isinstance(part, (ToolReturnPart, RetryPromptPart)):
+                    seen_result_ids.add(part.tool_call_id)
+        elif isinstance(message, ModelResponse):
+            for part in message.parts:
+                if isinstance(part, ToolCallPart):
+                    if part.tool_call_id not in seen_result_ids:
+                        return False
+
+    return True
