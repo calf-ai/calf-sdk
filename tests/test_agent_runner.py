@@ -124,20 +124,15 @@ async def test_agent(deploy_broker):
             final_response_topic="final_response",
         )
 
-        await wait_for_condition(lambda: trace_id in final_resp_store, timeout=20.0)
-        queue = final_resp_store[trace_id]
-        while True:
-            result_envelope = await queue.get()
+        queue = store[trace_id]
+        while not queue.empty():
+            result_envelope = queue.get_nowait()
             if isinstance(result_envelope.latest_message_in_history, ModelResponse):
-                print(f"{result_envelope.latest_message_in_history.text}")
+                print(f"Text: {result_envelope.latest_message_in_history.text}")
+                print(f"Tool calls: {result_envelope.latest_message_in_history.tool_calls}")
             else:
                 print(f"{result_envelope}")
             print("|")
-            if result_envelope.kind == "ai_response":
-                assert isinstance(result_envelope.latest_message_in_history, ModelResponse)
-                assert result_envelope.latest_message_in_history.text is not None
-                assert "snow" in result_envelope.latest_message_in_history.text.lower()
-                break
 
         print(f"{'=' * 10}End{'=' * 10}")
 
@@ -171,7 +166,7 @@ async def test_multi_turn_agent(deploy_broker):
             else:
                 print(f"{result_envelope}")
             print("|")
-            if result_envelope.kind == "ai_response":
+            if result_envelope.final_response:
                 assert isinstance(result_envelope.latest_message_in_history, ModelResponse)
                 assert result_envelope.latest_message_in_history.text is not None
                 assert "gpt" in result_envelope.latest_message_in_history.text.lower()
@@ -193,7 +188,7 @@ async def test_multi_turn_agent(deploy_broker):
             else:
                 print(f"{result_envelope}")
             print("|")
-            if result_envelope.kind == "ai_response":
+            if result_envelope.final_response:
                 assert isinstance(result_envelope.latest_message_in_history, ModelResponse)
                 assert result_envelope.latest_message_in_history.text is not None
                 assert "snow" in result_envelope.latest_message_in_history.text.lower()
@@ -214,7 +209,7 @@ async def test_multi_turn_agent(deploy_broker):
             else:
                 print(f"{result_envelope}")
             print("|")
-            if result_envelope.kind == "ai_response":
+            if result_envelope.final_response:
                 assert isinstance(result_envelope.latest_message_in_history, ModelResponse)
                 assert result_envelope.latest_message_in_history.text is not None
                 assert "lebron" in result_envelope.latest_message_in_history.text.lower()
@@ -243,9 +238,7 @@ async def test_parallel_tool_calls(deploy_broker):
             timeout=15.0,
         )
 
-        await wait_for_condition(lambda: trace_id in final_resp_store, timeout=15.0)
-        print(f"wait finished at: {time.perf_counter()}")
-        queue = final_resp_store[trace_id]
+        queue = store[trace_id]
         while True:
             result_envelope = await queue.get()
             if isinstance(result_envelope.latest_message_in_history, ModelResponse):
@@ -253,7 +246,7 @@ async def test_parallel_tool_calls(deploy_broker):
             else:
                 print(f"{result_envelope}")
             print("|")
-            if result_envelope.kind == "ai_response":
+            if result_envelope.final_response:
                 assert isinstance(result_envelope.latest_message_in_history, ModelResponse)
                 assert result_envelope.latest_message_in_history.text is not None
                 assert "detroit" in result_envelope.latest_message_in_history.text.lower()

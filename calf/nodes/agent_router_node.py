@@ -123,7 +123,9 @@ class AgentRouterNode(BaseNode):
     async def _reply_to_sender(
         self, event_envelope: EventEnvelope, correlation_id: str, broker: Any
     ) -> None:
-        event_envelope = event_envelope.model_copy(update={"kind": "ai_response"})
+        event_envelope = event_envelope.model_copy(
+            update={"kind": "ai_response", "final_response": True}
+        )
         await broker.publish(
             event_envelope,
             topic=event_envelope.final_response_topic,

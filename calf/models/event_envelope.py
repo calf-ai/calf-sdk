@@ -36,4 +36,8 @@ class EventEnvelope(CompactBaseModel):
     # Intentionally kept separate from message_history in order to simplify patch logic
     system_message: ModelRequest | None = None
 
+    # Where the final response from AI should be published to
     final_response_topic: str
+
+    # Whether the current message is the final response from the AI to the user
+    final_response: bool = False
