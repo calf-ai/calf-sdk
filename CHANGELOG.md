@@ -1,0 +1,35 @@
+# Changelog
+
+## [0.1.1](https://github.com/calf-ai/calf-sdk/compare/v0.1.0...v0.1.1) (2026-02-03)
+
+
+### Features
+
+* add build commands and CI workflows ([#3](https://github.com/calf-ai/calf-sdk/issues/3)) ([fa66282](https://github.com/calf-ai/calf-sdk/commit/fa66282d31c139d6b6579e6e13c54ecf02ab759d))
+* event-driven tool calling + agent routing node + function tool decorator ([#16](https://github.com/calf-ai/calf-sdk/issues/16)) ([5af52bd](https://github.com/calf-ai/calf-sdk/commit/5af52bd779c0b567cf80395063b622ef9d9cc388))
+* high level api structure skeleton ([#8](https://github.com/calf-ai/calf-sdk/issues/8)) ([960b622](https://github.com/calf-ai/calf-sdk/commit/960b622a4966d60f018b73a4e140015c24a2f1bd))
+* implement chat agent node + refactor provider layer ([#12](https://github.com/calf-ai/calf-sdk/issues/12)) ([c2e40c0](https://github.com/calf-ai/calf-sdk/commit/c2e40c0a8e0417f8d3097a786c09ed45144bc0f9))
+* implement event-driven base node pieces and refactor model clients ([#10](https://github.com/calf-ai/calf-sdk/issues/10)) ([bb66af0](https://github.com/calf-ai/calf-sdk/commit/bb66af0a17380e4e892e31442ff68d3e50e4fd8f))
+* implement node-based agent architecture with event-driven messaging ([#15](https://github.com/calf-ai/calf-sdk/issues/15)) ([0bfd190](https://github.com/calf-ai/calf-sdk/commit/0bfd190a60f1c5b9dbf9815c100014078106b27b))
+* message history persistence ([#18](https://github.com/calf-ai/calf-sdk/issues/18)) ([ef6dfae](https://github.com/calf-ai/calf-sdk/commit/ef6dfaee10eff29e71af64bf263dd275f488a78b))
+* MVP agents ([#17](https://github.com/calf-ai/calf-sdk/issues/17)) ([f6141d4](https://github.com/calf-ai/calf-sdk/commit/f6141d46d0f93ff13173cc2249bedd3fd735ecab))
+* openai chat completions client and base client class implementation ([#9](https://github.com/calf-ai/calf-sdk/issues/9)) ([28f6d62](https://github.com/calf-ai/calf-sdk/commit/28f6d62e72ff287b4ee7095992c0da2c07ff5d7c))
+* rename sdk to calfkit ([#26](https://github.com/calf-ai/calf-sdk/issues/26)) ([32d114f](https://github.com/calf-ai/calf-sdk/commit/32d114f14d537da279ebd3975d7df0511648ccfa))
+
+
+### Bug Fixes
+
+* mypy ci issues ([#23](https://github.com/calf-ai/calf-sdk/issues/23)) ([4429541](https://github.com/calf-ai/calf-sdk/commit/442954193fd6a64517f5cecef005018efec13622))
+* refine sdk and bug fixes ([#24](https://github.com/calf-ai/calf-sdk/issues/24)) ([89a586b](https://github.com/calf-ai/calf-sdk/commit/89a586bd40bfa5d32659a5e97c9f70fd3df38062))
+
+
+### Dependencies
+
+* update aiokafka requirement from &lt;0.13.0,&gt;=0.10.0 to &gt;=0.10.0,&lt;0.14.0 ([#13](https://github.com/calf-ai/calf-sdk/issues/13)) ([13b5014](https://github.com/calf-ai/calf-sdk/commit/13b501411a569a44a9baadccad821174c91deac7))
+* update typer requirement from &lt;0.20 to &lt;0.22 ([#14](https://github.com/calf-ai/calf-sdk/issues/14)) ([c7ef948](https://github.com/calf-ai/calf-sdk/commit/c7ef9483d75b5cc2cbcfb57dc32e0a01b15b82ab))
+
+
+### Documentation
+
+* high-level agents, teams, tools API documentation and example code usage snippets ([#6](https://github.com/calf-ai/calf-sdk/issues/6)) ([de81b63](https://github.com/calf-ai/calf-sdk/commit/de81b6353c4659f47302f8f37c78607ce6154f44))
+* update readme consistency ([#7](https://github.com/calf-ai/calf-sdk/issues/7)) ([279ccd1](https://github.com/calf-ai/calf-sdk/commit/279ccd1f5f2b6632ca27fb527e781a588205a419))
