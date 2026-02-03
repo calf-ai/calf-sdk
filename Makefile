@@ -1,4 +1,4 @@
-.PHONY: help check lint-check lint-fix format-check format-fix type-check test fix build build-wheel clean
+.PHONY: help check lint-check lint-fix format-check format-fix type-check test fix build build-wheel clean publish-test
 
 # Default target
 help:
@@ -20,6 +20,9 @@ help:
 	@echo "    make build        - Build sdist and wheel"
 	@echo "    make build-wheel  - Build wheel only"
 	@echo "    make clean        - Remove build artifacts"
+	@echo ""
+	@echo "  Publish:"
+	@echo "    make publish-test - Build and upload to TestPyPI"
 
 # === Checks ===
 
@@ -38,7 +41,7 @@ format-check:
 
 type-check:
 	@echo "Running type checker..."
-	@uv run mypy calf/
+	@uv run mypy calfkit/
 	@echo "✓ Type check passed"
 
 test:
@@ -76,3 +79,12 @@ clean:
 	@echo "Cleaning build artifacts..."
 	@rm -rf dist/ build/ *.egg-info
 	@echo "✓ Clean complete"
+
+# === Publish ===
+
+publish-test: clean
+	@echo "Building and uploading to TestPyPI..."
+	@uv build
+	@uv run twine upload --repository testpypi dist/*
+	@echo "✓ Published to TestPyPI"
+	@echo "  View at: https://test.pypi.org/project/calfkit/"

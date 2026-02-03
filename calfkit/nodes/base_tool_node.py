@@ -5,8 +5,8 @@ from typing import Any, cast
 
 from pydantic_ai import ModelRequest, Tool, ToolDefinition, ToolReturnPart
 
-from calf.models.event_envelope import EventEnvelope
-from calf.nodes.base_node import BaseNode, publish_to, subscribe_to
+from calfkit.models.event_envelope import EventEnvelope
+from calfkit.nodes.base_node import BaseNode, publish_to, subscribe_to
 
 
 class BaseToolNode(BaseNode, ABC):

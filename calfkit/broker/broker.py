@@ -5,8 +5,8 @@ from typing import Any, Literal
 from faststream import FastStream
 from faststream.kafka import KafkaBroker
 
-from calf.broker.deployable import Deployable
-from calf.broker.middleware import ContextInjectionMiddleware
+from calfkit.broker.deployable import Deployable
+from calfkit.broker.middleware import ContextInjectionMiddleware
 
 
 class Broker(KafkaBroker, Deployable):

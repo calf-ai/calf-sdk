@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from calf.broker.broker import Broker
+from calfkit.broker.broker import Broker
 
 
 class Registrator(ABC):

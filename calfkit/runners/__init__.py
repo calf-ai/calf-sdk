@@ -4,7 +4,7 @@ This module provides runners for deploying agent nodes to a message broker.
 Runners handle the registration and lifecycle of agent nodes within the broker system.
 """
 
-from calf.runners.node_runner import AgentRouterRunner, ChatRunner, NodeRunner, ToolRunner
+from calfkit.runners.node_runner import AgentRouterRunner, ChatRunner, NodeRunner, ToolRunner
 
 __all__ = [
     "NodeRunner",
