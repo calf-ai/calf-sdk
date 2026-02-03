@@ -1,6 +1,6 @@
 # Calfkit SDK
 
-Build AI agents that scale. Calfkit lets you compose agents from independent services—chat, tools, routing—that communicate through events, not API calls. Add capabilities without coordination. Scale each component independently. Stream agent outputs to any downstream system.
+The SDK to build AI agents that scale. Calfkit lets you compose agents from independent services—chat, tools, routing—that communicate through events, not API calls. Add capabilities without coordination. Scale each component independently. Stream agent outputs to any downstream system.
 
 ## Why Event-Driven Agents?
 
