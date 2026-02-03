@@ -4,14 +4,14 @@ Event-driven AI agents that scale like microservices. Build loosely-coupled, dis
 
 ## Why Event-Driven Agents?
 
-AI agents are the new apps. But building them like traditional web applications—with tight coupling and direct API calls—creates the same scalability problems that plagued early microservices.
+Building agents like traditional web applications—with tight coupling and direct API calls—creates the same scalability problems that plagued early microservices.
 
 When agents connect through APIs and RPC:
 - **Tight coupling** — Changing one tool breaks dependent agents
 - **Scaling bottlenecks** — Everything must scale together
 - **Siloed outputs** — Agent responses stay trapped in your AI layer
 
-**Event-driven architecture solves this.** Agents communicate through events, not direct calls. Each component runs independently, scales horizontally, and outputs can flow anywhere—CRMs, data warehouses, analytics platforms, other agents.
+Event-driven architecture provides the solution. Instead of direct API calls between components, agents interact through asynchronous event streams. Each component runs independently, scales horizontally, and outputs can flow anywhere—CRMs, data warehouses, analytics platforms, other agents.
 
 ## What Calf Gives You
 
@@ -24,7 +24,7 @@ Calf is a Python SDK that makes event-driven agents simple. You get the benefits
 | **Nothing gets lost** | Event persistence ensures reliable message delivery—even during failures or restarts |
 | **Real-time responses** | Low-latency event processing enables agents to react instantly to incoming data |
 | **Team independence** | Different teams can develop and deploy chat, tools, and routing concurrently without coordination overhead |
-| **Outputs go everywhere** | Agent results flow seamlessly to CRMs, CDPs, data warehouses—not just back to your application |
+| **Universal data flow** | Decoupling enables data to flow freely in both directions. Downstream, agent outputs integrate with any system (CRMs, CDPs, warehouses). Upstream, tools wrap data sources and deploy independently—no coordination needed. |
 
 ## Quick Start
 
