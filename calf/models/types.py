@@ -10,8 +10,8 @@ ToolCallRequest: TypeAlias = ToolCallPart
 class SerializableModelSettings(TypedDict, total=False):
     """Serializable version of pydantic_ai.ModelSettings.
 
-    This is a copy of ModelSettings with `timeout` narrowed to `float` only
-    (excluding httpx.Timeout) to ensure JSON serializability.
+    This is a copy of ModelSettings with `timeout` narrowed
+    to `float` only to ensure JSON serializability.
     """
 
     max_tokens: int

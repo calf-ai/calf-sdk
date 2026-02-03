@@ -1,1 +1,0 @@
-"""Calf Agent System."""

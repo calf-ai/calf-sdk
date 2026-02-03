@@ -16,12 +16,12 @@ class BaseToolNode(BaseNode, ABC):
 
 
 def agent_tool(func: Callable[..., Any] | Callable[..., Awaitable[Any]]) -> BaseToolNode:
-    """tool decorator"""
+    """Agent tool decorator to turn a function into a deployable node"""
     tool = Tool(func)
 
     class ToolNode(BaseToolNode):
-        @subscribe_to("tool_node.{func.__name__}.request")
-        @publish_to("tool_node.{func.__name__}.result")
+        @subscribe_to(f"tool_node.{func.__name__}.request")
+        @publish_to(f"tool_node.{func.__name__}.result")
         async def on_enter(self, event_envelope: EventEnvelope) -> EventEnvelope:
             if not event_envelope.tool_call_request:
                 raise RuntimeError("No tool call request found")

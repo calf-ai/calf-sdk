@@ -19,7 +19,7 @@ class EventEnvelope(CompactBaseModel):
     patch_model_request_params: ModelRequestParameters | None = None
     patch_model_settings: SerializableModelSettings | None = None
 
-    # running message history
+    # Running message history
     message_history: list[ModelMessage] = []
 
     @property
@@ -32,4 +32,12 @@ class EventEnvelope(CompactBaseModel):
     # thread id / conversation identifier
     thread_id: str | None = None
 
+    # Allow client to dynamically patch system message at runtime
+    # Intentionally kept separate from message_history in order to simplify patch logic
     system_message: ModelRequest | None = None
+
+    # Where the final response from AI should be published to
+    final_response_topic: str
+
+    # Whether the current message is the final response from the AI to the user
+    final_response: bool = False

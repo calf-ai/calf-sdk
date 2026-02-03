@@ -10,11 +10,8 @@ from calf.nodes.base_node import BaseNode, publish_to, subscribe_to
 
 
 class ChatNode(BaseNode, ABC):
-    """Entity for defining llm chat node internal wiring.
+    """Node defining the llm chat node internal wiring.
     Separate from any logic for LLM persona or behaviour."""
-
-    # TODO: a separate layer of abstraction for LLM behaviour
-    # and persona. i.e. memory, prompting, etc.
 
     _on_enter_topic_name = "ai_prompted"
     _post_to_topic_name = "ai_generated"
