@@ -17,7 +17,7 @@ from calfkit.runners.node_runner import ToolRunner
 
 # Define tools using the @agent_tool decorator
 @agent_tool
-def get_weather(location: str) -> str:
+async def get_weather(location: str) -> str:
     """Get the current weather for a location.
 
     Args:
@@ -26,6 +26,10 @@ def get_weather(location: str) -> str:
     Returns:
         Current weather information including temperature, conditions, and humidity
     """
+
+    # Fake wait
+    await asyncio.sleep(5.0)
+
     # Mock weather data for common locations
     mock_weather = {
         "new york": "Currently 72°F, Partly Cloudy. Humidity: 65%. Wind: 10 mph NW.",
@@ -149,7 +153,7 @@ async def main():
     print("Registering tool nodes...")
 
     tool_runner_weather = ToolRunner(get_weather)
-    tool_runner_weather.register_on(broker)
+    tool_runner_weather.register_on(broker, max_workers=2)
     print(f"  - get_weather registered subbed to (topic: {get_weather.publish_to_topic})")
 
     tool_runner_stock = ToolRunner(get_stock_price)
