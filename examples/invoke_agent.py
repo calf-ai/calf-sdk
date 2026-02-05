@@ -1,9 +1,5 @@
 import asyncio
 import traceback
-from typing import Annotated
-
-import uuid_utils
-from faststream import Context
 
 from calfkit.broker.broker import BrokerClient
 from calfkit.models.event_envelope import EventEnvelope

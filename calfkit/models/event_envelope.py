@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-from typing import Literal
 
 from pydantic_ai import ModelMessage, ModelRequest
 from pydantic_ai.models import ModelRequestParameters

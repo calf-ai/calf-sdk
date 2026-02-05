@@ -1,11 +1,12 @@
 import asyncio
 import math
-from typing import Annotated, Any, AsyncGenerator, Callable
+from collections.abc import AsyncGenerator, Callable
+from typing import Annotated, Any
 
 import uuid_utils
 from anyio import create_memory_object_stream
 from faststream import Context
-from pydantic_ai import ModelMessage, ModelResponse
+from pydantic_ai import ModelMessage
 
 from calfkit.broker.broker import BrokerClient
 from calfkit.models.event_envelope import EventEnvelope
@@ -21,11 +22,11 @@ class InvokeResponse:
             max_buffer_size=math.inf
         )
         self._done = asyncio.Event()
-        self._final_response = None
+        self._final_response: ModelMessage | None = None
         self.correlation_id = correlation_id
-        self._cleanup_task: asyncio.Task | None = None
+        self._cleanup_task: asyncio.Task[None] | None = None
 
-    async def _put(self, item: EventEnvelope):
+    async def _put(self, item: EventEnvelope) -> None:
         if self.finished:
             return
         await self.send.send(item)
@@ -44,18 +45,20 @@ class InvokeResponse:
             if item.latest_message_in_history:
                 yield item.latest_message_in_history
 
-    async def get_final_response(self) -> ModelResponse:
+    async def get_final_response(self) -> ModelMessage:
         """Blocks until final response is received, then returns it.
 
         Returns:
-            ModelResponse: The final response message from the model
+            ModelMessage: The final response message from the model
         """
         if not self.finished:
             await self._done.wait()
-        return self._final_response  # pyright: ignore[reportReturnType]
+        if self._final_response is None:
+            raise RuntimeError("Final response not available")
+        return self._final_response
 
     @property
-    def finished(self):
+    def finished(self) -> bool:
         return self._final_response is not None
 
 
@@ -67,13 +70,13 @@ class RouterServiceClient:
     def _get_ephemeral_handler(
         self,
         match_correlation_id: str,
-    ) -> tuple[Callable, InvokeResponse]:
+    ) -> tuple[Callable[..., Any], InvokeResponse]:
         response_pipe = InvokeResponse(match_correlation_id)
 
         async def _handle_responses(
             event_envelope: EventEnvelope,
             correlation_id: Annotated[str, Context()],
-        ):
+        ) -> None:
             if match_correlation_id == correlation_id:
                 await response_pipe._put(event_envelope)
 
@@ -121,7 +124,7 @@ class RouterServiceClient:
             **kwargs,
         )
 
-        async def cleanup_when_done():
+        async def cleanup_when_done() -> None:
             await response_pipe._done.wait()
             await subscriber.stop()
 

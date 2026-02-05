@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections.abc import Callable
 from functools import cached_property
 from typing import Any
@@ -61,5 +61,5 @@ class BaseNode(ABC):
                 return topics_dict["publish_topic"]
         return None
 
-    async def invoke(self, *args, **kwargs) -> str:
+    async def invoke(self, *args: Any, **kwargs: Any) -> str:
         raise NotImplementedError()

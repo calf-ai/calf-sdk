@@ -1,6 +1,5 @@
 from typing import Annotated, Any, overload
 
-import uuid_utils
 from faststream import Context
 from faststream.kafka.annotations import (
     KafkaBroker as BrokerAnnotation,
