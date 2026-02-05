@@ -41,10 +41,10 @@ Calfkit is a Python SDK that makes event-driven agents simple. You get all the b
 
 ### Start the Kafka Broker
 
-Calfkit uses Kafka as the event broker. Run the following command to clone the [calf-broker](https://github.com/calf-ai/calf-broker) repo and start a local Kafka instance:
+Calfkit uses Kafka as the event broker. Run the following command to clone the [calfkit-broker](https://github.com/calf-ai/calfkit-broker) repo and start a local Kafka instance:
 
 ```shell
-$ git clone https://github.com/calf-ai/calf-broker && cd calf-broker && docker compose -f deploy/docker/docker-compose.yml --profile confluent up local-broker
+$ git clone https://github.com/calf-ai/calfkit-broker && cd calfkit-broker && make dev-up
 ```
 
 Once Kafka is ready, open a new terminal tab to continue with the quickstart.
