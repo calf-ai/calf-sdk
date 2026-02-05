@@ -78,6 +78,12 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+Run the file to deploy the tool service:
+
+```shell
+$ python weather_tool.py
+```
+
 ### Deploy the Chat Node
 
 Deploy the LLM chat node as its own service.
@@ -102,12 +108,18 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+Run the file to deploy the chat service:
+
+```shell
+$ python chat_service.py
+```
+
 ### Deploy the Agent Router Node
 
 Deploy the agent router that orchestrates chat, tools, and conversation-level memory.
 
 ```python
-# router_service.py
+# agent_router_service.py
 import asyncio
 from calfkit.nodes import agent_tool, AgentRouterNode, ChatNode
 from calfkit.stores import InMemoryMessageHistoryStore
@@ -129,6 +141,12 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+```
+
+Run the file to deploy the agent router service:
+
+```shell
+$ python agent_router_service.py
 ```
 
 ### Invoke the Agent
@@ -158,6 +176,12 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+```
+
+Run the file to invoke the agent:
+
+```shell
+$ python client.py
 ```
 
 The `RouterServiceClient` handles ephemeral Kafka communication and cleanup automatically. You can also stream intermediate messages:
