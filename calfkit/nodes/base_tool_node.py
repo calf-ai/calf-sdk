@@ -37,8 +37,7 @@ def agent_tool(func: Callable[..., Any] | Callable[..., Awaitable[Any]]) -> Base
             )
             event_envelope = event_envelope.model_copy(
                 update={
-                    "kind": "tool_result",
-                    "incoming_node_messages": [ModelRequest(parts=[tool_result])],
+                    "uncommitted_messages": [ModelRequest(parts=[tool_result])],
                 }
             )
             return event_envelope

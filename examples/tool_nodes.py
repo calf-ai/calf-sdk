@@ -154,7 +154,7 @@ async def main():
     service = Service(broker)
 
     service.register_node(get_weather, max_workers=2)
-    print(f"  - get_weather registered subbed to (topic: {get_weather.publish_to_topic})")
+    print(f"  - get_weather registered 2 workers subbed to (topic: {get_weather.publish_to_topic})")
 
     service.register_node(get_stock_price)
     print(f"  - get_stock_price registered subbed to (topic: {get_stock_price.publish_to_topic})")

@@ -42,9 +42,7 @@ async def main():
 
     # Configure the LLM model
     print("Configuring OpenAI model client...")
-    model_client = OpenAIModelClient(
-        model_name="gpt-5-nano",
-    )
+    model_client = OpenAIModelClient(model_name="gpt-5-nano", reasoning_effort="low")
 
     # Deploy the chat node
     print("Registering chat node...")

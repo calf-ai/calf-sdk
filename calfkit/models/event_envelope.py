@@ -8,12 +8,15 @@ from calfkit.models.types import CompactBaseModel, SerializableModelSettings, To
 
 
 class EventEnvelope(CompactBaseModel):
-    kind: Literal["tool_call_request", "user_prompt", "ai_response", "tool_result"]
-    text: str | None = None
     trace_id: str | None = None
 
     # Used to surface the tool call from latest message so tool call workers do not have to dig
+    # For tool node eyes only
     tool_call_request: ToolCallRequest | None = None
+
+    # Pending tool calls to enforce sequential tool calling when thread_id
+    # is not provided or when there is no memory history store configured
+    pending_tool_calls: list[ToolCallRequest] = []
 
     # Optional inference-time patch in settings and parameters
     patch_model_request_params: ModelRequestParameters | None = None
@@ -26,8 +29,8 @@ class EventEnvelope(CompactBaseModel):
     def latest_message_in_history(self) -> ModelMessage | None:
         return self.message_history[-1] if self.message_history else None
 
-    # The result message from a node
-    incoming_node_messages: Sequence[ModelMessage] = []
+    # Uncommitted messages, often coming out from a node and not yet persisted in message history
+    uncommitted_messages: Sequence[ModelMessage] = []
 
     # thread id / conversation identifier
     thread_id: str | None = None
@@ -37,7 +40,7 @@ class EventEnvelope(CompactBaseModel):
     system_message: ModelRequest | None = None
 
     # Where the final response from AI should be published to
-    final_response_topic: str
+    final_response_topic: str | None = None
 
-    # Whether the current message is the final response from the AI to the user
+    # Whether the current state of messages is the final response from the AI to the user
     final_response: bool = False

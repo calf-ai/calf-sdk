@@ -130,18 +130,18 @@ class AgentRouterNode(BaseNode):
         correlation_id: Annotated[str, Context()],
         broker: BrokerAnnotation,
     ) -> EventEnvelope:
-        if not ctx.incoming_node_messages:
+        if not ctx.uncommitted_messages:
             raise RuntimeError("There is no response message to process")
 
         # One central place where message history is updated
         if self.message_history_store is not None and ctx.thread_id is not None:
             await self.message_history_store.append_many(
-                thread_id=ctx.thread_id, messages=ctx.incoming_node_messages
+                thread_id=ctx.thread_id, messages=ctx.uncommitted_messages
             )
             ctx.message_history = await self.message_history_store.get(thread_id=ctx.thread_id)
         else:
-            ctx.message_history.extend(ctx.incoming_node_messages)
-
+            ctx.message_history.extend(ctx.uncommitted_messages)
+        print("message history:", ctx.message_history)
         # Apply system prompts with priority: incoming > self.system_message > existing history
         # First, apply self.system_message as fallback (replaces existing history)
         if ctx.system_message is not None:
@@ -157,13 +157,16 @@ class AgentRouterNode(BaseNode):
                 ctx.latest_message_in_history.finish_reason == "tool_call"
                 or ctx.latest_message_in_history.tool_calls
             ):
-                for tool_call in ctx.latest_message_in_history.tool_calls:
-                    await self._route_tool(ctx, tool_call, correlation_id, broker)
+                await self._route_tool_calls(
+                    ctx, ctx.latest_message_in_history.tool_calls, correlation_id, broker
+                )
             else:
-                # reply to sender here
                 await self._reply_to_sender(ctx, correlation_id, broker)
+        elif ctx.pending_tool_calls:
+            await self._route_tool_calls(ctx, ctx.pending_tool_calls, correlation_id, broker)
         elif validate_tool_call_pairs(ctx.message_history):
             await self._call_model(ctx, correlation_id, broker)
+
         return ctx
 
     async def _route_tool(
@@ -173,14 +176,22 @@ class AgentRouterNode(BaseNode):
         correlation_id: str,
         broker: Any,
     ) -> None:
+        """Route a tool call request to the appropriate tool node.
+
+        Modifies event_envelope in place by setting the tool_call_request field.
+
+        Args:
+            event_envelope: The event envelope to route. Modified in place.
+            generated_tool_call: The tool call request from the model response.
+            correlation_id: The correlation ID for request tracking.
+            broker: The message broker for publishing.
+        """
         tool_topic = self.tools_topic_registry.get(generated_tool_call.tool_name)
         if tool_topic is None:
             # TODO: implement a short circuit to respond with an
             # error message for when provided tool does not exist.
             return
-        event_envelope = event_envelope.model_copy(
-            update={"kind": "tool_call_request", "tool_call_request": generated_tool_call}
-        )
+        event_envelope.tool_call_request = generated_tool_call
         await broker.publish(
             event_envelope,
             topic=tool_topic,
@@ -188,15 +199,59 @@ class AgentRouterNode(BaseNode):
             reply_to=self.subscribed_topic,
         )
 
+    def _requires_sequential_tool_calls(self, ctx: EventEnvelope) -> bool:
+        """Check if sequential tool calling is required.
+
+        Sequential mode is needed when there's no message history store or no
+        thread_id, because concurrent tool results cannot be aggregated without
+        a central store keyed by thread_id.
+        """
+        return self.message_history_store is None or ctx.thread_id is None
+
+    async def _route_tool_calls(
+        self,
+        ctx: EventEnvelope,
+        tool_calls: list[ToolCallRequest],
+        correlation_id: str,
+        broker: Any,
+    ) -> None:
+        """Route tool calls, using sequential mode when no central store is available.
+
+        In sequential mode, only the first tool call is routed and the rest are
+        queued in pending_tool_calls. In concurrent mode, all tool calls are
+        routed at once.
+
+        Args:
+            ctx: The event envelope. Modified in place to set pending_tool_calls.
+            tool_calls: List of tool calls to route.
+            correlation_id: The correlation ID for request tracking.
+            broker: The message broker for publishing.
+        """
+        if self._requires_sequential_tool_calls(ctx) and len(tool_calls) > 1:
+            first, *rest = tool_calls
+            ctx.pending_tool_calls = rest
+            await self._route_tool(ctx, first, correlation_id, broker)
+        else:
+            ctx.pending_tool_calls = []
+            for tool_call in tool_calls:
+                await self._route_tool(ctx, tool_call, correlation_id, broker)
+
     async def _reply_to_sender(
         self, event_envelope: EventEnvelope, correlation_id: str, broker: Any
     ) -> None:
-        event_envelope = event_envelope.model_copy(
-            update={"kind": "ai_response", "final_response": True}
-        )
+        """Send the final response back to the client.
+
+        Modifies event_envelope in place by setting final_response to True.
+
+        Args:
+            event_envelope: The event envelope containing the final response. Modified in place.
+            correlation_id: The correlation ID for request tracking.
+            broker: The message broker for publishing.
+        """
+        event_envelope.final_response = True
         await broker.publish(
             event_envelope,
-            topic=event_envelope.final_response_topic,
+            topic=event_envelope.final_response_topic or self.publish_to_topic,
             correlation_id=correlation_id,
         )
 
@@ -206,14 +261,22 @@ class AgentRouterNode(BaseNode):
         correlation_id: str,
         broker: Any,
     ) -> None:
+        """Send the message history to the chat node for LLM inference.
+
+        Modifies event_envelope in place by setting patch_model_request_params
+        if not already set.
+
+        Args:
+            event_envelope: The event envelope to send. Modified in place.
+            correlation_id: The correlation ID for request tracking.
+            broker: The message broker for publishing.
+        """
         patch_model_request_params = event_envelope.patch_model_request_params
         if patch_model_request_params is None:
             patch_model_request_params = ModelRequestParameters(
                 function_tools=[tool.tool_schema() for tool in self.tools]
             )
-        event_envelope = event_envelope.model_copy(
-            update={"patch_model_request_params": patch_model_request_params}
-        )
+        event_envelope.patch_model_request_params = patch_model_request_params
         await broker.publish(
             event_envelope,
             topic=self.chat.subscribed_topic,  # type: ignore
@@ -223,11 +286,12 @@ class AgentRouterNode(BaseNode):
 
     async def invoke(
         self,
+        *,
         user_prompt: str,
         broker: BrokerClient,
-        final_response_topic: str,
+        final_response_topic: str | None = None,
+        correlation_id: str,
         thread_id: str | None = None,
-        correlation_id: str | None = None,
     ) -> str:
         """Invoke the agent
 
@@ -246,17 +310,15 @@ class AgentRouterNode(BaseNode):
             if self.tools
             else None
         )
-        if correlation_id is None:
-            correlation_id = uuid_utils.uuid7().hex
         new_node_messages = [ModelRequest.user_text_prompt(user_prompt)]
-        await broker.start()
+        if not broker._connection:
+            await broker.start()
         await broker.publish(
             EventEnvelope(
-                kind="user_prompt",
                 trace_id=correlation_id,
                 patch_model_request_params=patch_model_request_params,
                 thread_id=thread_id,
-                incoming_node_messages=new_node_messages,
+                uncommitted_messages=new_node_messages,
                 system_message=self.system_message,
                 final_response_topic=final_response_topic,
             ),
