@@ -34,17 +34,20 @@ Calfkit is a Python SDK that makes event-driven agents simple. You get all the b
 ## Quick Start
 
 ### Prerequisites
-Calfkit requires **Python 3.10 or later**
-```bash
-# Kafka (single command via Docker)
-docker run -d -p 9092:9092 apache/kafka:latest
 
-# Python 3.10+
-python --version
+- **Python 3.10 or later**
+- **Docker** installed and running
+- **OpenAI API key** (or another OpenAI API compliant LLM provider)
 
-# OpenAI API key
-export OPENAI_API_KEY=sk-...
+### Start the Kafka Broker
+
+Calfkit uses Kafka as the event broker. Run the following command to clone the [calf-broker](https://github.com/calf-ai/calf-broker) repo and start a local Kafka instance:
+
+```shell
+$ git clone https://github.com/calf-ai/calf-broker && cd calf-broker && docker compose -f deploy/docker/docker-compose.yml --profile confluent up local-broker
 ```
+
+Once Kafka is ready, open a new terminal tab to continue with the quickstart.
 
 ### Install
 
@@ -87,7 +90,6 @@ $ python weather_tool.py
 ### Deploy the Chat Node
 
 Deploy the LLM chat node as its own service.
-
 ```python
 # chat_service.py
 import asyncio
@@ -106,6 +108,12 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+```
+
+Set your OpenAI API key:
+
+```shell
+$ export OPENAI_API_KEY=sk-...
 ```
 
 Run the file to deploy the chat service:
