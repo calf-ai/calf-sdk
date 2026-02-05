@@ -2,7 +2,7 @@ import asyncio
 
 from calfkit.broker.broker import BrokerClient
 from calfkit.nodes.base_tool_node import agent_tool
-from calfkit.runners.service import Service
+from calfkit.runners.service import NodesService
 
 # Tool Nodes - Deploys tool workers that can be called by the agent.
 
@@ -151,10 +151,10 @@ async def main():
 
     # Deploy tool nodes
     print("Registering tool nodes...")
-    service = Service(broker)
+    service = NodesService(broker)
 
     service.register_node(get_weather, max_workers=2)
-    print(f"  - get_weather registered subbed to (topic: {get_weather.publish_to_topic})")
+    print(f"  - get_weather registered 2 workers subbed to (topic: {get_weather.publish_to_topic})")
 
     service.register_node(get_stock_price)
     print(f"  - get_stock_price registered subbed to (topic: {get_stock_price.publish_to_topic})")

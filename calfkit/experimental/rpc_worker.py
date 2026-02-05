@@ -4,6 +4,8 @@ from uuid import uuid4
 from faststream.kafka import KafkaBroker, KafkaMessage
 from faststream.types import SendableMessage
 
+# via faststream docs: https://faststream.ag2.ai/0.6/howto/kafka/rpc/#reusable-class
+
 
 class RPCWorker:
     responses: dict[str, Future[bytes]]

@@ -60,3 +60,6 @@ class BaseNode(ABC):
             if "publish_topic" in topics_dict:
                 return topics_dict["publish_topic"]
         return None
+
+    async def invoke(self, *args: Any, **kwargs: Any) -> str:
+        raise NotImplementedError()

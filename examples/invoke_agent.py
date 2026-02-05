@@ -1,15 +1,12 @@
 import asyncio
 import traceback
-from typing import Annotated
-
-from faststream import Context
 
 from calfkit.broker.broker import BrokerClient
 from calfkit.models.event_envelope import EventEnvelope
 from calfkit.nodes.agent_router_node import AgentRouterNode
 
 # Import tools from tool_nodes for schema/routing info
-from tests.utils import wait_for_condition
+from calfkit.runners.service_client import RouterServiceClient
 
 # Invoke Agent - Sends requests to the agent and collects responses.
 
@@ -27,83 +24,64 @@ final_responses: dict[str, asyncio.Queue[EventEnvelope]] = {}
 
 
 async def main():
-    print("=" * 50)
-    print("Agent Invocation Client")
-    print("=" * 50)
-
-    # Connect to the real Kafka broker
     print("\nConnecting to Kafka broker at localhost:9092...")
     broker = BrokerClient(bootstrap_servers="localhost:9092")
+    try:
+        print("=" * 50)
+        print("Agent Invocation Client")
+        print("=" * 50)
 
-    # Create router node client for invoking.
-    # No patch for tools and system prompts
-    router_node = AgentRouterNode()
+        # Connect to the real Kafka broker
 
-    # Set up a subscriber to collect final responses
-    @broker.subscriber("final_response")
-    async def collect_response(
-        event_envelope: EventEnvelope, correlation_id: Annotated[str, Context()]
-    ):
-        if correlation_id not in final_responses:
-            final_responses[correlation_id] = asyncio.Queue()
-        await final_responses[correlation_id].put(event_envelope)
+        # Create router node client for invoking.
+        # No patch for tools and system prompts
+        router_node = AgentRouterNode()
 
-    print("Ready to invoke agent.\n")
+        print("Ready to invoke agent.\n")
 
-    # Test queries
-    test_queries = [
-        "What's the current weather in Tokyo?",
-        "What's the stock price of Apple?",
-        "What's the exchange rate from USD to JPY?",
-    ]
+        # Test queries
+        test_queries = [
+            "What's the current weather in Tokyo and Cupertino?",
+            "What's the stock price of Apple?",
+            "What's the exchange rate from USD to JPY?",
+        ]
 
-    print("=" * 50)
-    print("Running Test Queries")
-    print("=" * 50)
+        print("=" * 50)
+        print("Running Test Queries")
+        print("=" * 50)
 
-    for i, query in enumerate(test_queries, 1):
-        print(f"\n[Test {i}] User: {query}")
+        for i, query in enumerate(test_queries, 1):
+            print(f"\n[Test {i}] User: {query}")
 
-        try:
-            # Invoke the agent
-            correlation_id = await router_node.invoke(
-                user_prompt=query,
-                broker=broker,
-                final_response_topic="final_response",
-            )
-            print(f"  Sent with correlation_id: {correlation_id[:8]}...")
-
-            # Wait for the response
-            timeout = 30.0
-            await wait_for_condition(
-                lambda: correlation_id in final_responses,
-            )
-
-            # Get the response
-            response_queue = final_responses[correlation_id]
             try:
-                response = await asyncio.wait_for(response_queue.get(), timeout=timeout)
+                # Invoke the agent
+                router_client = RouterServiceClient(broker, router_node)
+                resp = await router_client.invoke(user_prompt=query)
+                print(f"  Sent with correlation_id: {resp.correlation_id[:8]}...")
 
-                if response.final_response and response.latest_message_in_history:
-                    text = getattr(response.latest_message_in_history, "text", None)
-                    if text:
-                        print(f"  Assistant: {text}")
-                    else:
-                        print(f"  Response: {response.latest_message_in_history}")
+                # Wait for the response
+                timeout = 30.0
+                final_msg = None
+                async with asyncio.timeout(timeout):
+                    final_msg = await resp.get_final_response()
+                text = getattr(final_msg, "text", None)
+                if text:
+                    print(f"  Assistant: {text}")
                 else:
-                    print(f"  Intermediate response: {response.kind}")
-            except asyncio.TimeoutError:
-                print("  ERROR: Timeout waiting for response")
+                    print(f"  Response: {final_msg}")
 
-        except Exception as e:
-            print(f"  ERROR: {e}")
+            except Exception as e:
+                print(f"  ERROR: {e}")
 
-            traceback.print_exc()
+                traceback.print_exc()
 
-    # Cleanup
-    print("\n" + "=" * 50)
-    print("Test completed!")
-    print("=" * 50)
+        # Cleanup
+        print("\n" + "=" * 50)
+        print("Test completed!")
+        print("=" * 50)
+
+    finally:
+        await broker.stop()
 
 
 if __name__ == "__main__":
