@@ -40,7 +40,7 @@ Calfkit is a Python SDK that builds event-driven agents out-the-box. You get all
 - Docker installed and running (for local testing with a Calfkit broker)
 - OpenAI API key (or another OpenAI API compliant LLM provider)
 
-### Start the Kafka Broker Using Docker
+### Start the Kafka Broker (Requires Docker)
 
 Calfkit uses Kafka as the event broker. Run the following command to clone the [calfkit-broker](https://github.com/calf-ai/calfkit-broker) repo and start a local Kafka broker container:
 
