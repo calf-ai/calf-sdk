@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.6](https://github.com/calf-ai/calfkit-sdk/compare/v0.1.5...v0.1.6) (2026-02-06)
+
+### Refactor
+* vendor pydantic-ai-slim to reduce package install footprint by 81% ([#48](https://github.com/calf-ai/calfkit-sdk/issues/48)) ([a31ca78](https://github.com/calf-ai/calfkit-sdk/commit/a31ca78))
+
+### Documentation
+
+* add python ver. compatibility and add shareable tool explanation ([#46](https://github.com/calf-ai/calfkit-sdk/issues/46)) ([a22e23b](https://github.com/calf-ai/calfkit-sdk/commit/a22e23b22024ba34b8ff72d286d91ef516a9a9e5))
+* update README.md for readability ([#49](https://github.com/calf-ai/calfkit-sdk/issues/49)) ([b4c4f78](https://github.com/calf-ai/calfkit-sdk/commit/b4c4f78e7e979bed2145ff1c0522986fa7d4bd85))
+
 ## [0.1.5](https://github.com/calf-ai/calfkit-sdk/compare/v0.1.4...v0.1.5) (2026-02-06)
 
 
