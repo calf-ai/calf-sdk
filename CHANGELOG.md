@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.1.5](https://github.com/calf-ai/calfkit-sdk/compare/v0.1.4...v0.1.5) (2026-02-06)
+
+
+### Bug Fixes
+
+* distinguish between unset and empty `tool_nodes` in runtime patching + docs: dynamic runtime tools and system prompt patching ([#44](https://github.com/calf-ai/calfkit-sdk/issues/44)) ([7805e1a](https://github.com/calf-ai/calfkit-sdk/commit/7805e1ab522fec2e061138701f2a85ebd7e73689))
+
+
+### Documentation
+
+* add contact section ([#43](https://github.com/calf-ai/calfkit-sdk/issues/43)) ([a9ec018](https://github.com/calf-ai/calfkit-sdk/commit/a9ec018b12bc155e374e466215cf1b1c3867bdba))
+* fix quickstart documentation for tool patching to be more clear ([#45](https://github.com/calf-ai/calfkit-sdk/issues/45)) ([dbad7af](https://github.com/calf-ai/calfkit-sdk/commit/dbad7affcda7c8477d61971345a67b166f491833))
+* update README.md wording ([#39](https://github.com/calf-ai/calfkit-sdk/issues/39)) ([c8fe616](https://github.com/calf-ai/calfkit-sdk/commit/c8fe6168d5f6abe4745daafe3b52a877dd12bdc8))
+* update README.md wording ([#41](https://github.com/calf-ai/calfkit-sdk/issues/41)) ([191836c](https://github.com/calf-ai/calfkit-sdk/commit/191836c38251fecbd3f87a388bd84821cedf6166))
+* update README.md wording ([#42](https://github.com/calf-ai/calfkit-sdk/issues/42)) ([bd43c32](https://github.com/calf-ai/calfkit-sdk/commit/bd43c3233feb0838a1133c1f7dbd9524cb19f4b1))
+
 ## [0.1.4](https://github.com/calf-ai/calfkit-sdk/compare/v0.1.3...v0.1.4) (2026-02-05)
 
 
