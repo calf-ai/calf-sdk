@@ -40,7 +40,7 @@ Calfkit is a Python SDK that builds event-driven agents out-the-box. You get all
 - Docker installed and running (for local testing with a Calfkit broker)
 - OpenAI API key (or another OpenAI API compliant LLM provider)
 
-### Start the Kafka Broker Using Docker
+### Start the Kafka Broker (Requires Docker)
 
 Calfkit uses Kafka as the event broker. Run the following command to clone the [calfkit-broker](https://github.com/calf-ai/calfkit-broker) repo and start a local Kafka broker container:
 
@@ -222,7 +222,7 @@ response = await client.invoke(user_prompt="Weather in Tokyo?")
 This lets different clients customize agent behavior per-request. Tool patching is currently limited to subsets of tools configured in the deployed router.
 
 ## Motivation
-To move toward AI employees and AI-run companies, teams of agents must progress beyond brittle, tightly coupled, synchronous coordination. This requires embracing event-driven, asynchronous communication patterns between agents and their dependencies.
+Scalable agent teams must progress beyond brittle, tightly coupled, synchronous coordination. This means embracing event-driven, asynchronous communication patterns between agents and their dependencies. 
 
 ## Contact
 
