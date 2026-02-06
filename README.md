@@ -58,7 +58,7 @@ pip install calfkit
 
 ### Deploy the Tool Node
 
-Define and deploy a tool as an independent service.
+Define and deploy a tool as an independent service. Tools are not owned by or coupled to any specific agent—once deployed, any agent in your system can discover and invoke the tool. Deploy once, use everywhere.
 
 ```python
 # weather_tool.py
