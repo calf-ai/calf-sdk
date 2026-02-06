@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/calf-ai/calfkit-sdk/compare/v0.1.6...v0.1.7) (2026-02-06)
+
+
+### Documentation
+
+* add support to documentation and improve readability ([#50](https://github.com/calf-ai/calfkit-sdk/issues/50)) ([e333239](https://github.com/calf-ai/calfkit-sdk/commit/e333239f28e85a6db3181c37cfbec1997b67fb18))
+
 ## [0.1.6](https://github.com/calf-ai/calfkit-sdk/compare/v0.1.5...v0.1.6) (2026-02-06)
 
 ### Refactor
