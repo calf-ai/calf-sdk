@@ -2,6 +2,8 @@
 
 ## [0.1.6](https://github.com/calf-ai/calfkit-sdk/compare/v0.1.5...v0.1.6) (2026-02-06)
 
+### Refactor
+* vendor pydantic-ai-slim to reduce package install footprint by 81% ([#48](https://github.com/calf-ai/calfkit-sdk/issues/48)) ([a31ca78](https://github.com/calf-ai/calfkit-sdk/commit/a31ca78))
 
 ### Documentation
 
