@@ -53,14 +53,13 @@ Calfkit is a Python SDK that builds event-driven agents out-the-box. You get all
 pip install calfkit
 ```
 
-### Start the Kafka Broker (Requires Docker)
+### ☁️ Calfkit Cloud (Coming Soon)
 
-> [!TIP]
-> **☁️ Calfkit Cloud**: Fully-Managed Kafka Service for AI Agents (Coming Soon)
-> - No infrastructure to self-host or manage
-> - Built-in agent observability & agent-event tracing
->
-> [Fill out the interest form →](https://forms.gle/Rk61GmHyJzequEPm8)
+Skip the infrastructure. Calfkit Cloud is a fully-managed Kafka service built for Calfkit AI agents and multi-agent teams. No server infrastructure to self-host or maintain, with built-in observability and agent-event tracing.
+
+Coming soon. [Fill out the interest form →](https://forms.gle/Rk61GmHyJzequEPm8)
+
+### Start Local Calfkit Server (Requires Docker)
 
 Calfkit uses Kafka as the event broker. Run the following command to clone the [calfkit-broker](https://github.com/calf-ai/calfkit-broker) repo and start a local Kafka broker container:
 
@@ -242,6 +241,7 @@ Scalable agent teams must progress beyond brittle, tightly coupled, synchronous 
 ## Contact
 
 [![X](https://img.shields.io/badge/Follow-black?logo=x)](https://x.com/ryanyuhater)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-blue?logo=linkedin)](https://www.linkedin.com/company/calfkit)
 
 ## Support
 
