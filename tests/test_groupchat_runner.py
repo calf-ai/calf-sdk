@@ -3,10 +3,6 @@ import os
 import sys
 
 import pytest
-
-# Temporarily raise limit so the debug logging can show the full conversation
-# before TestKafkaBroker's synchronous dispatch exhausts the stack.
-sys.setrecursionlimit(10000)
 from dotenv import load_dotenv
 from faststream.kafka import TestKafkaBroker
 
@@ -19,6 +15,10 @@ from calfkit.nodes.chat_node import ChatNode
 from calfkit.nodes.groupchat_router_node import GroupchatNode
 from calfkit.providers.pydantic_ai.openai import OpenAIModelClient
 from calfkit.runners.service import NodesService
+
+# Temporarily raise limit so the debug logging can show the full conversation
+# before TestKafkaBroker's synchronous dispatch exhausts the stack.
+sys.setrecursionlimit(10000)
 
 load_dotenv()
 
