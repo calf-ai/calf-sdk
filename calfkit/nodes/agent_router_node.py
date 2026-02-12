@@ -29,6 +29,7 @@ class AgentRouterNode(BaseNode):
         self,
         chat_node: BaseNode,
         *,
+        name: str | None = None,
         system_prompt: str,
         tool_nodes: list[BaseToolNode],
         handoff_nodes: list[type[BaseNode]] | None = None,
@@ -41,6 +42,7 @@ class AgentRouterNode(BaseNode):
         self,
         chat_node: BaseNode,
         *,
+        name: str | None = None,
         system_prompt: str | None = None,
         tool_nodes: list[BaseToolNode] | None = None,
         handoff_nodes: list[type[BaseNode]] | None = None,
@@ -49,12 +51,13 @@ class AgentRouterNode(BaseNode):
     ): ...
 
     @overload
-    def __init__(self) -> None: ...
+    def __init__(self, *, name: str | None = None) -> None: ...
 
     @overload
     def __init__(
         self,
         *,
+        name: str | None = None,
         system_prompt: str | None = None,
         tool_nodes: list[BaseToolNode] | None = None,
         handoff_nodes: list[type[BaseNode]] | None = None,
