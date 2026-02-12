@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.7](https://github.com/calf-ai/calfkit-sdk/compare/v0.1.6...v0.1.7) (2026-02-12)
+
+
+### Features
+
+* agent-to-agent communication and groupchat support  ([#56](https://github.com/calf-ai/calfkit-sdk/issues/56)) ([8d7fd4d](https://github.com/calf-ai/calfkit-sdk/commit/8d7fd4d17e91d1f31a8ac70355bbbaab452f5ed6))
+
+
+### Documentation
+
+* add support to documentation and improve readability ([#50](https://github.com/calf-ai/calfkit-sdk/issues/50)) ([e333239](https://github.com/calf-ai/calfkit-sdk/commit/e333239f28e85a6db3181c37cfbec1997b67fb18))
+* calfkit cloud interest form ([#53](https://github.com/calf-ai/calfkit-sdk/issues/53)) ([5206020](https://github.com/calf-ai/calfkit-sdk/commit/5206020c44a5951fcee99770968aa60dc3a15943))
+* update calfkit cloud docs and add linkedin contact ([#55](https://github.com/calf-ai/calfkit-sdk/issues/55)) ([bcf9fb5](https://github.com/calf-ai/calfkit-sdk/commit/bcf9fb5f2b6d44c7911be7139715c351f88e00d8))
+* use TIP syntax for Calfkit Cloud callout ([#54](https://github.com/calf-ai/calfkit-sdk/issues/54)) ([5c6fa4e](https://github.com/calf-ai/calfkit-sdk/commit/5c6fa4e6b3a0e6cc6bbf05df74ef3d03cfadc27f))
+
 ## [0.1.6](https://github.com/calf-ai/calfkit-sdk/compare/v0.1.5...v0.1.6) (2026-02-06)
 
 ### Refactor
