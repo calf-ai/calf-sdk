@@ -5,7 +5,7 @@ from faststream.kafka.annotations import (
     KafkaBroker as BrokerAnnotation,
 )
 
-from calfkit._vendor.pydantic_ai import ModelRequest, ModelResponse, SystemPromptPart
+from calfkit._vendor.pydantic_ai import ModelMessage, ModelRequest, ModelResponse, SystemPromptPart
 from calfkit._vendor.pydantic_ai.models import ModelRequestParameters
 from calfkit.broker.broker import BrokerClient
 from calfkit.messages import patch_system_prompts, validate_tool_call_pairs
@@ -63,6 +63,7 @@ class AgentRouterNode(BaseNode):
         chat_node: BaseNode | None = None,
         *,
         system_prompt: str | None = None,
+        name: str | None = None,
         tool_nodes: list[BaseToolNode] | None = None,
         handoff_nodes: list[type[BaseNode]] = [],
         message_history_store: MessageHistoryStore | None = None,
@@ -121,7 +122,7 @@ class AgentRouterNode(BaseNode):
             else None
         )
 
-        super().__init__(**kwargs)
+        super().__init__(name=name, **kwargs)
 
     @subscribe_to(_router_sub_topic_name)
     @publish_to(_router_pub_topic_name)
@@ -131,19 +132,23 @@ class AgentRouterNode(BaseNode):
         correlation_id: Annotated[str, Context()],
         broker: BrokerAnnotation,
     ) -> EventEnvelope:
-        if not ctx.uncommitted_messages:
+        if not ctx.uncommitted_messages_exist and not ctx.is_groupchat:
             raise RuntimeError("There is no response message to process")
 
         # One central place where message history is updated
-        if self.message_history_store is not None and ctx.thread_id is not None:
+        if (
+            self.message_history_store is not None
+            and ctx.thread_id is not None
+            and not ctx.is_groupchat
+        ):
             await self.message_history_store.append_many(
-                thread_id=ctx.thread_id, messages=ctx.uncommitted_messages
+                thread_id=ctx.thread_id, messages=ctx.pop_all_uncommited_agent_messages()
             )
             ctx.message_history = await self.message_history_store.get(thread_id=ctx.thread_id)
         else:
-            ctx.message_history.extend(ctx.uncommitted_messages)
-        print("message history:", ctx.message_history)
-        # Apply system prompts with priority: incoming > self.system_message > existing history
+            ctx.message_history.extend(ctx.pop_all_uncommited_agent_messages())
+
+        # Apply system prompts with priority: incoming patch > self.system_message > existing history
         # First, apply self.system_message as fallback (replaces existing history)
         if ctx.system_message is not None:
             ctx.message_history = patch_system_prompts(ctx.message_history, [ctx.system_message])
@@ -161,6 +166,10 @@ class AgentRouterNode(BaseNode):
                 await self._route_tool_calls(
                     ctx, ctx.latest_message_in_history.tool_calls, correlation_id, broker
                 )
+            elif ctx.is_groupchat:
+                # Groupchat mode first entry: the latest ModelResponse is from
+                # another agent, not this agent's LLM. Call model for this agent's turn.
+                await self._call_model(ctx, correlation_id, broker)
             else:
                 await self._reply_to_sender(ctx, correlation_id, broker)
         elif ctx.pending_tool_calls:
@@ -209,7 +218,7 @@ class AgentRouterNode(BaseNode):
         thread_id, because concurrent tool results cannot be aggregated without
         a central store keyed by thread_id.
         """
-        return self.message_history_store is None or ctx.thread_id is None
+        return self.message_history_store is None or ctx.thread_id is None or ctx.is_groupchat
 
     async def _route_tool_calls(
         self,
@@ -251,7 +260,7 @@ class AgentRouterNode(BaseNode):
             correlation_id: The correlation ID for request tracking.
             broker: The message broker for publishing.
         """
-        event_envelope.final_response = True
+        event_envelope.mark_as_end_of_turn()
         await broker.publish(
             event_envelope,
             topic=event_envelope.final_response_topic or self.publish_to_topic,
@@ -315,18 +324,22 @@ class AgentRouterNode(BaseNode):
             if self.tools is not None
             else None
         )
-        new_node_messages = [ModelRequest.user_text_prompt(user_prompt)]
         if not broker._connection:
             await broker.start()
+
+        event_envelope = EventEnvelope(
+            trace_id=correlation_id,
+            patch_model_request_params=patch_model_request_params,
+            thread_id=thread_id,
+            system_message=self.system_message,
+            final_response_topic=final_response_topic,
+        )
+        event_envelope.mark_as_start_of_turn()
+        event_envelope.prepare_uncommitted_agent_messages(
+            [ModelRequest.user_text_prompt(user_prompt)]
+        )
         await broker.publish(
-            EventEnvelope(
-                trace_id=correlation_id,
-                patch_model_request_params=patch_model_request_params,
-                thread_id=thread_id,
-                uncommitted_messages=new_node_messages,
-                system_message=self.system_message,
-                final_response_topic=final_response_topic,
-            ),
+            event_envelope,
             topic=self.subscribed_topic or "",
             correlation_id=correlation_id,
         )

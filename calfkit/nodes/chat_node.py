@@ -41,7 +41,5 @@ class ChatNode(BaseNode, ABC):
             model_settings=cast(ModelSettings | None, patch_model_settings),
             model_request_parameters=request_parameters,
         )
-        return_envelope = event_envelope.model_copy(
-            update={"uncommitted_messages": [model_response]}
-        )
-        return return_envelope
+        event_envelope.add_to_uncommitted_messages(model_response)
+        return event_envelope

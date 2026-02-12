@@ -1,7 +1,11 @@
 from collections.abc import Sequence
+from typing import Literal
+
+from pydantic import Field
 
 from calfkit._vendor.pydantic_ai import ModelMessage, ModelRequest
 from calfkit._vendor.pydantic_ai.models import ModelRequestParameters
+from calfkit.models.groupchat import GroupchatDataModel
 from calfkit.models.types import CompactBaseModel, SerializableModelSettings, ToolCallRequest
 
 
@@ -14,21 +18,21 @@ class EventEnvelope(CompactBaseModel):
 
     # Pending tool calls to enforce sequential tool calling when thread_id
     # is not provided or when there is no memory history store configured
-    pending_tool_calls: list[ToolCallRequest] = []
+    pending_tool_calls: list[ToolCallRequest] = Field(default_factory=list)
 
     # Optional inference-time patch in settings and parameters
     patch_model_request_params: ModelRequestParameters | None = None
     patch_model_settings: SerializableModelSettings | None = None
 
     # Running message history
-    message_history: list[ModelMessage] = []
+    message_history: list[ModelMessage] = Field(default_factory=list)
 
     @property
     def latest_message_in_history(self) -> ModelMessage | None:
         return self.message_history[-1] if self.message_history else None
 
     # Uncommitted messages, often coming out from a node and not yet persisted in message history
-    uncommitted_messages: Sequence[ModelMessage] = []
+    _uncommitted_messages: list[ModelMessage] = Field(default_factory=list)
 
     # thread id / conversation identifier
     thread_id: str | None = None
@@ -41,4 +45,50 @@ class EventEnvelope(CompactBaseModel):
     final_response_topic: str | None = None
 
     # Whether the current state of messages is the final response from the AI to the user
-    final_response: bool = False
+    _final_response: bool = False
+
+    # For holding groupchat data and config. Only to directly be accessed by the groupchat node.
+    groupchat_data: GroupchatDataModel | None = None
+
+    @property
+    def is_groupchat(self):
+        return self.groupchat_data is not None
+
+    @property
+    def is_end_of_turn(self):
+        return self._final_response
+
+    @property
+    def uncommitted_messages_exist(self):
+        """Check if the envelope has an uncommitted, unprocessed message."""
+        return self._uncommitted_messages
+
+    def mark_as_end_of_turn(self):
+        self._final_response = True
+
+    def mark_as_start_of_turn(self):
+        self._final_response = False
+
+    def add_to_uncommitted_messages(self, message: ModelMessage):
+        """Add message to uncommitted list at the agent level and grouchat level, if it exists.
+
+        Args:
+            message (ModelMessage): new message
+        """
+        self._uncommitted_messages.append(message)
+        if self.groupchat_data is not None:
+            self.groupchat_data.add_uncommitted_message_to_turn(message)
+
+    def prepare_uncommitted_agent_messages(self, messages: list[ModelMessage]):
+        """Prepare and set the agent-level uncommitted messages with provided messages.
+
+        Args:
+            messages (list[ModelMessage]): list of messages
+        """
+        self._uncommitted_messages = messages
+
+    def pop_all_uncommited_agent_messages(self):
+        """Clears the list of uncommitted agent-level messages and returns them"""
+        messages = self._uncommitted_messages
+        self._uncommitted_messages = []
+        return messages
