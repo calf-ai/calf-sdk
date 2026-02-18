@@ -24,11 +24,11 @@ class BaseNode(ABC):
     """Effectively a node is the data plane, defining the internal wiring and logic.
     When provided to a NodeRunner, node logic can be deployed."""
 
-    _handler_registry: dict[Callable[..., Any], dict[str, str]] = {}
+    _handler_registry: dict[Callable[..., Any], dict[str, str | list[str]]] = {}
 
     def __init__(self, name: str | None = None, *args: Any, **kwargs: Any) -> None:
         self.name = name
-        self.bound_registry: dict[Callable[..., Any], dict[str, str]] = {
+        self.bound_registry: dict[Callable[..., Any], dict[str, str | list[str]]] = {
             fn.__get__(self, type(self)): topics_dict
             for fn, topics_dict in self._handler_registry.items()
         }
