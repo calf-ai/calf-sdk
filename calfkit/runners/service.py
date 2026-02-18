@@ -20,8 +20,8 @@ class NodesService:
         extra_subscribe_kwargs: dict[str, Any] = {},
     ) -> None:
         for handler_fn, topics_dict in node.bound_registry.items():
-            pub = topics_dict.get("publish_topic")
-            subscribe_topics = topics_dict.get("subscribe_topics")
+            pub: str | None = topics_dict.get("publish_topic")
+            subscribe_topics: list[str] | None = topics_dict.get("subscribe_topics")
             if subscribe_topics is not None:
                 for sub_topic in subscribe_topics:
                     subscriber = self._broker.subscriber(
@@ -33,7 +33,7 @@ class NodesService:
                     handler_fn = subscriber(handler_fn)
                     self._subscribers.append(subscriber)
             else:
-                sub = topics_dict.get("subscribe_topic")
+                sub: str | None = topics_dict.get("subscribe_topic")
                 if sub is not None:
                     subscriber = self._broker.subscriber(
                         sub,

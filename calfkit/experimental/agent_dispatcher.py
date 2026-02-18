@@ -24,7 +24,7 @@ class AgentDispatcher(BaseNode, ABC):
         self,
         *,
         tool_nodes: list[BaseToolNode] | None = None,
-        tool_nodes_factory: Callable | None = None,
+        tool_nodes_factory: Callable[[str], list[BaseToolNode]] | None = None,
         **kwargs: Any,
     ):
         self.tool_nodes = tool_nodes
@@ -50,7 +50,7 @@ class AgentDispatcher(BaseNode, ABC):
                 message_history_store=InMemoryMessageHistoryStore(),
                 system_prompt=system_prompt,
             )
-            service = NodesService(broker)  # pyright: ignore[reportArgumentType]
+            service = NodesService(broker)  # type: ignore[arg-type]
             service.register_node(router_node, group_id=group_id)
             if tools is not None:
                 for tool in tools:
@@ -64,10 +64,10 @@ class AgentDispatcher(BaseNode, ABC):
 
 if __name__ == "__main__":
 
-    async def main():
+    async def main() -> None:
         dispatcher_node = AgentDispatcher()
         broker = BrokerClient(bootstrap_servers="localhost:9092")
-        service = NodesService(broker)  # pyright: ignore[reportArgumentType]
+        service = NodesService(broker)
         service.register_node(dispatcher_node)
         await service.run()
 
