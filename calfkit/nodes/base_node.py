@@ -111,11 +111,11 @@ class BaseNode(ABC):
             subscribe_topics = updated.get("subscribe_topics", [])
             for key in ("entrypoint_topic_template", "returnpoint_topic_template"):
                 template = updated.get(key)
-                if template and self.name:
+                if isinstance(template, str) and self.name:
                     resolved = template.format(name=self.name)
                     subscribe_topics = [*subscribe_topics, resolved]
                     updated["subscribe_topics"] = subscribe_topics
-                    updated[key] = resolved  # type: ignore[literal-required]
+                    updated[key] = resolved
             self.bound_registry[handler] = updated
 
     @cached_property

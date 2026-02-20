@@ -26,9 +26,7 @@ class RoundRobinGroupchatNode(BaseNode, ABC):
         **kwargs: Any,
     ):
         self._agent_node_topics = [
-            node.entrypoint_topic
-            for node in agent_nodes
-            if node.entrypoint_topic is not None
+            node.entrypoint_topic for node in agent_nodes if node.entrypoint_topic is not None
         ]
         self._shared_system_prompt_addition = shared_system_prompt_addition
         super().__init__(**kwargs)

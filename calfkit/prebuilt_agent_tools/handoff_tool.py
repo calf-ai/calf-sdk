@@ -31,7 +31,7 @@ Args:
             if handoff.entrypoint_topic is not None and handoff.name is not None
         }
 
-        def handoff_tool(name: str, message: str):
+        def handoff_tool(name: str, message: str) -> None:
             """Use this tool to handoff the task or conversation to another agent.
 
             Args:
@@ -71,7 +71,10 @@ Args:
         if target_topic is None:
             tool_result = ToolReturnPart(
                 tool_name=tool_call_req.tool_name,
-                content=f"Error: agent '{target_name}' not found. Available agents: {', '.join(self._handoffs_topic_registry.keys())}",
+                content=(
+                    f"Error: agent '{target_name}' not found."
+                    f" Available agents: {', '.join(self._handoffs_topic_registry.keys())}"
+                ),
                 tool_call_id=tool_call_req.tool_call_id,
             )
             event_envelope.tool_call_request = None
@@ -93,7 +96,10 @@ Args:
         if event_envelope.thread_id is None:
             tool_result = ToolReturnPart(
                 tool_name=tool_call_req.tool_name,
-                content="Error: handoff requires a thread_id (message history store must be configured).",
+                content=(
+                    "Error: handoff requires a thread_id"
+                    " (message history store must be configured)."
+                ),
                 tool_call_id=tool_call_req.tool_call_id,
             )
             event_envelope.tool_call_request = None
