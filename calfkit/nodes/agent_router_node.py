@@ -1,4 +1,4 @@
-from typing import Annotated, Any, overload
+from typing import Annotated, Any, cast, overload
 
 from faststream import Context
 from faststream.kafka.annotations import (
@@ -11,7 +11,7 @@ from calfkit.broker.broker import BrokerClient
 from calfkit.messages import patch_system_prompts, validate_tool_call_pairs
 from calfkit.models.event_envelope import EventEnvelope
 from calfkit.models.types import ToolCallRequest
-from calfkit.nodes.base_node import BaseNode, publish_to, subscribe_private, subscribe_to
+from calfkit.nodes.base_node import BaseNode, entrypoint, publish_to, subscribe_to
 from calfkit.nodes.base_tool_node import BaseToolNode
 from calfkit.stores.base import MessageHistoryStore
 
@@ -114,9 +114,9 @@ class AgentRouterNode(BaseNode):
 
         self.tools_topic_registry: dict[str, str] | None = (
             {
-                tool.tool_schema.name: (tool.subscribed_topic or tool.private_subscribed_topic)
+                tool.tool_schema.name: cast(str, tool.subscribed_topic or tool.entrypoint_topic)
                 for tool in tool_nodes
-                if tool.subscribed_topic is not None or tool.private_subscribed_topic is not None
+                if tool.subscribed_topic is not None or tool.entrypoint_topic is not None
             }
             if tool_nodes is not None
             else None
@@ -125,7 +125,7 @@ class AgentRouterNode(BaseNode):
         super().__init__(name=name, **kwargs)
 
     @subscribe_to(_router_sub_topic_name)
-    @subscribe_private("agent_router.private.{name}")
+    @entrypoint("agent_router.private.{name}")
     @publish_to(_router_pub_topic_name)
     async def _router(
         self,
@@ -203,7 +203,7 @@ class AgentRouterNode(BaseNode):
             event_envelope,
             topic=tool_topic,
             correlation_id=correlation_id,
-            reply_to=self.private_subscribed_topic or self.subscribed_topic,
+            reply_to=self.entrypoint_topic or self.subscribed_topic,
         )
 
     def _requires_sequential_tool_calls(self, ctx: EventEnvelope) -> bool:
@@ -290,7 +290,7 @@ class AgentRouterNode(BaseNode):
             event_envelope,
             topic=self.chat.subscribed_topic,  # type: ignore
             correlation_id=correlation_id,
-            reply_to=self.private_subscribed_topic or self.subscribed_topic,
+            reply_to=self.entrypoint_topic or self.subscribed_topic,
         )
 
     async def invoke(

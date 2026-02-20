@@ -9,7 +9,7 @@ from calfkit._vendor.pydantic_ai import ModelRequest, ModelResponse, ToolReturnP
 from calfkit._vendor.pydantic_ai.tools import Tool, ToolDefinition
 from calfkit.models.event_envelope import EventEnvelope
 from calfkit.models.handoff import HandoffFrame
-from calfkit.nodes.base_node import BaseNode, subscribe_private
+from calfkit.nodes.base_node import BaseNode, entrypoint, returnpoint
 from calfkit.nodes.base_tool_node import BaseToolNode
 
 
@@ -26,9 +26,9 @@ Args:
     message (str): The message to provide the handoff agent in order to provide context."""
 
         self._handoffs_topic_registry: dict[str, str] = {
-            handoff.name: handoff.private_subscribed_topic
+            handoff.name: handoff.entrypoint_topic
             for handoff in nodes
-            if handoff.private_subscribed_topic is not None and handoff.name is not None
+            if handoff.entrypoint_topic is not None and handoff.name is not None
         }
 
         def handoff_tool(name: str, message: str):
@@ -48,14 +48,9 @@ Args:
         node_names = sorted(n.name for n in nodes if n.name)
         resolved_name = f"handoff_{'_'.join(node_names)}"
         super().__init__(name=resolved_name, **kwargs)
-        # Resolved topic for Phase 2 — must match the @subscribe_private template below
-        self._delegation_response_topic = f"tool_node.handoff.response.{resolved_name}"
 
     # --- Phase 1: Delegation entry point ---
-    # IMPORTANT: on_enter must be defined before on_delegation_response so that
-    # private_subscribed_topic (which returns the first private topic) resolves
-    # to Phase 1's topic. The router uses that for tools_topic_registry.
-    @subscribe_private("tool_node.handoff.{name}")
+    @entrypoint("tool_node.handoff.{name}")
     async def on_enter(
         self,
         event_envelope: EventEnvelope,
@@ -119,7 +114,7 @@ Args:
         delegation = event_envelope.model_copy(deep=True)
         delegation.push_handoff_frame(frame)
         delegation.message_history = []
-        delegation.final_response_topic = self._delegation_response_topic
+        delegation.final_response_topic = self.returnpoint_topic
         delegation.pending_tool_calls = []
         delegation.tool_call_request = None
         delegation.patch_model_request_params = None
@@ -145,7 +140,7 @@ Args:
         return EventEnvelope()
 
     # --- Phase 2: Delegation response ---
-    @subscribe_private("tool_node.handoff.response.{name}")
+    @returnpoint("tool_node.handoff.response.{name}")
     async def on_delegation_response(
         self,
         event_envelope: EventEnvelope,

@@ -22,15 +22,29 @@ def publish_to(topic_name: str) -> Callable[[Any], Any]:
     return decorator
 
 
-def subscribe_private(topic_template: str) -> Callable[[Any], Any]:
-    """Declare a private topic subscription resolved at init time from the node's name.
+def entrypoint(topic_template: str) -> Callable[[Any], Any]:
+    """Declare an entrypoint topic — the topic where this node receives incoming work.
 
     The template uses Python str.format() syntax with `{name}` as the placeholder,
-    e.g. ``@subscribe_private("agent_router.{name}.replies")``.
+    e.g. ``@entrypoint("agent_router.private.{name}")``.
     """
 
     def decorator(fn: Any) -> Any:
-        fn._private_topic_template = topic_template
+        fn._entrypoint_topic_template = topic_template
+        return fn
+
+    return decorator
+
+
+def returnpoint(topic_template: str) -> Callable[[Any], Any]:
+    """Declare a returnpoint topic — the topic where this node receives delegated responses.
+
+    The template uses Python str.format() syntax with `{name}` as the placeholder,
+    e.g. ``@returnpoint("tool_node.handoff.response.{name}")``.
+    """
+
+    def decorator(fn: Any) -> Any:
+        fn._returnpoint_topic_template = topic_template
         return fn
 
     return decorator
@@ -42,7 +56,8 @@ class TopicsDict(TypedDict, total=False):
     publish_topic: str
     subscribe_topics: list[str]
     shared_subscribe_topic: str
-    private_topic_template: str
+    entrypoint_topic_template: str
+    returnpoint_topic_template: str
 
 
 class BaseNode(ABC):
@@ -68,34 +83,40 @@ class BaseNode(ABC):
         for attr in cls.__dict__.values():
             publish_to_topic_name = getattr(attr, "_publish_to_topic_name", None)
             subscribe_to_topic_name = getattr(attr, "_subscribe_to_topic_name", None)
-            private_topic_template = getattr(attr, "_private_topic_template", None)
+            entrypoint_template = getattr(attr, "_entrypoint_topic_template", None)
+            returnpoint_template = getattr(attr, "_returnpoint_topic_template", None)
             if publish_to_topic_name:
                 cls._handler_registry[attr] = {"publish_topic": publish_to_topic_name}
             if subscribe_to_topic_name:
                 cls._handler_registry[attr] = cls._handler_registry.get(attr, {})
                 cls._handler_registry[attr]["shared_subscribe_topic"] = subscribe_to_topic_name
                 cls._handler_registry[attr]["subscribe_topics"] = [subscribe_to_topic_name]
-            if private_topic_template:
+            if entrypoint_template:
                 cls._handler_registry[attr] = cls._handler_registry.get(attr, {})
-                cls._handler_registry[attr]["private_topic_template"] = private_topic_template
+                cls._handler_registry[attr]["entrypoint_topic_template"] = entrypoint_template
+            if returnpoint_template:
+                cls._handler_registry[attr] = cls._handler_registry.get(attr, {})
+                cls._handler_registry[attr]["returnpoint_topic_template"] = returnpoint_template
 
     def _resolve_private_topics(self) -> None:
-        """Resolve private topic templates for named nodes.
+        """Resolve entrypoint/returnpoint topic templates for named nodes.
 
-        When a handler is decorated with @subscribe_private, its template
-        is resolved using the node's name, and the handler is subscribed
-        to both the public and private topics.
+        When a handler is decorated with @entrypoint or @returnpoint, its
+        template is resolved using the node's name, and the handler is
+        subscribed to both the public and private topics.
         """
         for handler, topics in list(self.bound_registry.items()):
-            template = topics.get("private_topic_template")
-            subscribe_topics = topics.get("subscribe_topics", [])
-            if template and self.name:
-                resolved = template.format(name=self.name)
-                self.bound_registry[handler] = {
-                    **topics,
-                    "subscribe_topics": [*subscribe_topics, resolved],
-                    "private_topic_template": resolved,
-                }
+            # Copy to avoid mutating the class-level _handler_registry dicts
+            updated: TopicsDict = {**topics}
+            subscribe_topics = updated.get("subscribe_topics", [])
+            for key in ("entrypoint_topic_template", "returnpoint_topic_template"):
+                template = updated.get(key)
+                if template and self.name:
+                    resolved = template.format(name=self.name)
+                    subscribe_topics = [*subscribe_topics, resolved]
+                    updated["subscribe_topics"] = subscribe_topics
+                    updated[key] = resolved  # type: ignore[literal-required]
+            self.bound_registry[handler] = updated
 
     @cached_property
     def subscribed_topic(self) -> str | None:
@@ -112,12 +133,21 @@ class BaseNode(ABC):
         return None
 
     @cached_property
-    def private_subscribed_topic(self) -> str | None:
+    def entrypoint_topic(self) -> str | None:
         if self.name is None:
             return None
         for topics_dict in self.bound_registry.values():
-            if "private_topic_template" in topics_dict:
-                return topics_dict["private_topic_template"]
+            if "entrypoint_topic_template" in topics_dict:
+                return topics_dict["entrypoint_topic_template"]
+        return None
+
+    @cached_property
+    def returnpoint_topic(self) -> str | None:
+        if self.name is None:
+            return None
+        for topics_dict in self.bound_registry.values():
+            if "returnpoint_topic_template" in topics_dict:
+                return topics_dict["returnpoint_topic_template"]
         return None
 
     @cached_property
