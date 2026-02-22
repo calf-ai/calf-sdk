@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import Field
 
 from calfkit._vendor.pydantic_ai import ModelMessage, ModelRequest
@@ -9,6 +11,14 @@ from calfkit.models.types import CompactBaseModel, SerializableModelSettings, To
 
 class EventEnvelope(CompactBaseModel):
     trace_id: str | None = None
+
+    # Runtime deps from router.invoke(), forwarded to tool nodes via ToolContext.
+    # Must be JSON-serializable (e.g. dict, str, int, list) since the envelope
+    # travels over the Kafka wire as JSON.
+    deps: Any = None
+
+    # Agent name set by AgentRouterNode's handler, forwarded to tool nodes via ToolContext
+    agent_name: str | None = None
 
     # Used to surface the tool call from latest message so tool call workers do not have to dig
     # For tool node eyes only

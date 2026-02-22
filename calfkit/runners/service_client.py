@@ -1,16 +1,19 @@
 import asyncio
 import math
 from collections.abc import AsyncGenerator, Callable
-from typing import Annotated, Any
+from typing import Annotated, Any, Generic, overload
 
 import uuid_utils
 from anyio import create_memory_object_stream
 from faststream import Context
+from typing_extensions import TypeVar
 
 from calfkit._vendor.pydantic_ai import ModelMessage
 from calfkit.broker.broker import BrokerClient
 from calfkit.models.event_envelope import EventEnvelope
 from calfkit.nodes.agent_router_node import AgentRouterNode
+
+AgentDepsT = TypeVar("AgentDepsT", default=None)
 
 
 class InvokeResponse:
@@ -62,10 +65,51 @@ class InvokeResponse:
         return self._final_response is not None
 
 
-class RouterServiceClient:
-    def __init__(self, broker: BrokerClient, node: AgentRouterNode):
+class RouterServiceClient(Generic[AgentDepsT]):
+    """Client for invoking a deployed AgentRouterNode.
+
+    Generic in `AgentDepsT` — the type of runtime dependencies passed to tool
+    functions via ``ToolContext``.  When ``deps_type`` is provided, type checkers
+    can verify that the ``deps`` value passed to :meth:`request` / :meth:`invoke`
+    matches the expected type.
+
+    Examples::
+
+        # Without deps (default)
+        client = RouterServiceClient(broker, router_node)
+        response = await client.request(user_prompt="Hello")
+
+        # With typed deps
+        client = RouterServiceClient(broker, router_node, deps_type=MyDeps)
+        response = await client.request(user_prompt="Buy BTC", deps=MyDeps(...))
+    """
+
+    @overload
+    def __init__(
+        self,
+        broker: BrokerClient,
+        node: AgentRouterNode,
+        *,
+        deps_type: type[AgentDepsT],
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self,
+        broker: BrokerClient,
+        node: AgentRouterNode,
+    ) -> None: ...
+
+    def __init__(
+        self,
+        broker: BrokerClient,
+        node: AgentRouterNode,
+        *,
+        deps_type: type[AgentDepsT] | None = None,
+    ) -> None:
         self._broker = broker
         self._node = node
+        self._deps_type = deps_type
 
     def _get_ephemeral_handler(
         self,
@@ -86,21 +130,24 @@ class RouterServiceClient:
         self,
         user_prompt: str,
         *,
+        deps: AgentDepsT | None = None,
         final_response_topic: str | None = None,
         thread_id: str | None = None,
         correlation_id: str | None = None,
-        **kwargs: Any,
     ) -> InvokeResponse:
         """Invoke the service via a request and wait for a response.
         Synchronous request->response communication model.
 
         Args:
-            user_prompt (str): User prompt to request the model
-            correlation_id (str | None, optional): Optionally provide a correlation ID
-            for this request. Defaults to None.
+            user_prompt: User prompt to request the model.
+            deps: Optional runtime dependencies forwarded to tool functions
+                via ``ToolContext``.
+            final_response_topic: The topic to publish the final response to.
+            thread_id: The conversation ID for multi-turn memory.
+            correlation_id: Optionally provide a correlation ID for this request.
 
         Returns:
-            InvokeResponse: The response stream for the request
+            InvokeResponse: The response stream for the request.
         """
         if correlation_id is None:
             correlation_id = uuid_utils.uuid7().hex
@@ -122,7 +169,7 @@ class RouterServiceClient:
             final_response_topic=final_response_topic,
             thread_id=thread_id,
             correlation_id=correlation_id,
-            **kwargs,
+            deps=deps,
         )
 
         async def cleanup_when_done() -> None:
@@ -138,21 +185,24 @@ class RouterServiceClient:
         self,
         user_prompt: str,
         *,
+        deps: AgentDepsT | None = None,
         final_response_topic: str | None = None,
         thread_id: str | None = None,
         correlation_id: str | None = None,
-        **kwargs: Any,
     ) -> str:
-        """Invoke method to asynchronously publish message to the node,
-        following fire-and-forget pattern.
+        """Invoke the agent asynchronously, following fire-and-forget pattern.
 
         Args:
-            user_prompt (str): User prompt to request the model
-            final_response_topic (str | None, optional): The final topic to respond to when
-            the agent node is done. Defaults to None.
-            thread_id (str | None, optional): The conversation ID. Defaults to None.
-            correlation_id (str | None, optional): Optionally provide a correlation ID
-            for this request. Defaults to None.
+            user_prompt: User prompt to request the model.
+            deps: Optional runtime dependencies forwarded to tool functions
+                via ``ToolContext``.
+            final_response_topic: The final topic to respond to when
+                the agent node is done.
+            thread_id: The conversation ID for multi-turn memory.
+            correlation_id: Optionally provide a correlation ID for this request.
+
+        Returns:
+            The correlation ID for this request.
         """
         if correlation_id is None:
             correlation_id = uuid_utils.uuid7().hex
@@ -165,5 +215,5 @@ class RouterServiceClient:
             final_response_topic=final_response_topic,
             thread_id=thread_id,
             correlation_id=correlation_id,
-            **kwargs,
+            deps=deps,
         )
