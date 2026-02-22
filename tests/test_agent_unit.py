@@ -6,7 +6,14 @@ import pytest
 from faststream import Context
 from faststream.kafka import TestKafkaBroker
 
-from calfkit._vendor.pydantic_ai import ModelMessage, ModelResponse, TextPart, ToolCallPart, models
+from calfkit._vendor.pydantic_ai import (
+    ModelMessage,
+    ModelResponse,
+    TextPart,
+    ToolCallPart,
+    ToolReturnPart,
+    models,
+)
 from calfkit._vendor.pydantic_ai.models.function import AgentInfo, FunctionModel
 from calfkit.broker.broker import BrokerClient
 from calfkit.models.event_envelope import EventEnvelope
@@ -415,10 +422,10 @@ async def test_tool_context_runtime_injection():
             part
             for msg in result.message_history
             for part in msg.parts
-            if hasattr(part, "content") and hasattr(part, "tool_name") and part.tool_name == "ctx_echo_tool"
+            if isinstance(part, ToolReturnPart) and part.tool_name == "ctx_echo_tool"
         ]
         assert len(tool_returns) == 1, f"Expected 1 tool return, got {len(tool_returns)}"
-        content = tool_returns[0].content
+        content = str(tool_returns[0].content)
         assert "agent=test_agent" in content, f"agent_name not injected: {content}"
         assert "sk-test-123" in content, f"deps not injected: {content}"
         assert "msg=hello" in content, f"message arg missing: {content}"
