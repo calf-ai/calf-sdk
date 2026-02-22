@@ -12,7 +12,9 @@ from calfkit.models.types import CompactBaseModel, SerializableModelSettings, To
 class EventEnvelope(CompactBaseModel):
     trace_id: str | None = None
 
-    # Runtime deps from router.invoke(), forwarded to tool nodes via ToolContext
+    # Runtime deps from router.invoke(), forwarded to tool nodes via ToolContext.
+    # Must be JSON-serializable (e.g. dict, str, int, list) since the envelope
+    # travels over the Kafka wire as JSON.
     deps: Any = None
 
     # Agent name set by AgentRouterNode's handler, forwarded to tool nodes via ToolContext
