@@ -295,38 +295,33 @@ class PortfolioView:
             table.add_row("[dim]No accounts yet[/]", "", "", "", "", "", "", "")
         else:
             for agent_id, account in accounts.items():
-                trades_str = str(account.trade_count)
+                total_value = account.portfolio_value(price_book)
+                # Agent header row
+                table.add_row(
+                    agent_id, str(account.trade_count),
+                    "", "", "", "", "", "",
+                )
+                # Individual ticker rows
                 if not account.positions:
                     table.add_row(
-                        agent_id,
-                        trades_str,
-                        f"[green]${account.cash:,.2f}[/]",
-                        "[dim]—[/]",
-                        "[dim]—[/]",
-                        "[dim]—[/]",
-                        "[dim]—[/]",
-                        f"[bold]${account.portfolio_value(price_book):,.2f}[/]",
+                        "", "", "", "[dim]—[/]", "[dim]—[/]", "[dim]—[/]", "[dim]—[/]", "",
                     )
                 else:
-                    first = True
                     for pid, qty in sorted(account.positions.items()):
                         entry = price_book.get(pid)
                         price = float(entry["price"]) if entry else 0.0
                         mkt_val = price * qty
                         cost_basis = account.cost_basis.get(pid, 0.0)
                         table.add_row(
-                            agent_id if first else "",
-                            trades_str if first else "",
-                            f"[green]${account.cash:,.2f}[/]" if first else "",
-                            pid,
-                            str(qty),
-                            f"${cost_basis:,.2f}",
-                            f"${mkt_val:,.2f}",
-                            f"[bold]${account.portfolio_value(price_book):,.2f}[/]"
-                            if first
-                            else "",
+                            "", "", "", pid, str(qty),
+                            f"${cost_basis:,.2f}", f"${mkt_val:,.2f}", "",
                         )
-                        first = False
+                # Total value row with cash
+                table.add_row(
+                    "", "", f"[green]${account.cash:,.2f}[/]",
+                    "", "", "", "[bold]Total[/]",
+                    f"[bold]${total_value:,.2f}[/]",
+                )
 
         return Panel(table, title="[bold]Agent Portfolios[/]", border_style="green")
 
