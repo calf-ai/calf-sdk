@@ -2,6 +2,8 @@ import asyncio
 import logging
 import os
 
+from dotenv import load_dotenv
+
 from calfkit.broker.broker import BrokerClient
 from calfkit.nodes.agent_router_node import AgentRouterNode
 from examples.daytrading_agents_arena.coinbase_consumer import CandleBook
@@ -23,13 +25,7 @@ from examples.daytrading_agents_arena.coinbase_kafka_connector import (
 #     - Chat node deployed (chat_node.py)
 #     - Tools deployed (tools_and_dispatcher.py)
 
-SYSTEM_PROMPT = (
-    "You are a high volume crypto day trader. Your goal is to maximize your account value. "
-    "You have access to tools that allow you to view your portfolio, and make trades. "
-    "You will be invoked roughly every 5-10 seconds--at which time you can use your "
-    "tools to view your portfolio and make trades, or if you decide not to, you can "
-    "simply respond with a message explaining why not."
-)
+load_dotenv()
 
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 MIN_PUBLISH_INTERVAL = 60.0

@@ -15,7 +15,6 @@ Example:
 
 import argparse
 import asyncio
-import os
 import sys
 
 from calfkit.broker.broker import BrokerClient
@@ -26,6 +25,17 @@ from calfkit.stores.in_memory import InMemoryMessageHistoryStore
 from examples.daytrading_agents_arena.trading_tools import calculator, execute_trade, get_portfolio
 
 STRATEGIES: dict[str, str] = {
+    "default": (
+        "You are a crypto day trader. Your goal is to maximize your total account balance "
+        "(cash + portfolio value) over time.\n\n"
+        "You will be invoked periodically with live market data including current "
+        "prices, bid/ask spreads, and multi-timeframe candlestick charts (1-min, "
+        "5-min, and 15-min) for several cryptocurrency products.\n\n"
+        "You have access to tools to view your portfolio, execute trades (buy/sell at "
+        "market price), and a calculator for math. Use the market data provided to make informed trading decisions. "
+        "Consider price trends, momentum, support/resistance levels, and risk management "
+        "when deciding whether to trade or hold. Explain your reasoning briefly."
+    ),
     "momentum": (
         "You are a momentum day trader operating in crypto markets. Your trading philosophy "
         "is to follow the trend: you buy assets showing strong upward price action and sell "
@@ -39,7 +49,7 @@ STRATEGIES: dict[str, str] = {
         "- Concentrate capital. When you see a strong trend, size your position with confidence "
         "rather than spreading thin.\n\n"
         "You have access to tools to view your portfolio and execute trades. You will be invoked "
-        "roughly every 5-10 seconds with fresh market data. Evaluate price momentum across "
+        "periodically with fresh market data. Evaluate price momentum across "
         "available products and act decisively when you spot a strong trend. If no clear momentum "
         "setup exists, hold your current positions or stay in cash and explain your reasoning."
     ),
@@ -54,7 +64,7 @@ STRATEGIES: dict[str, str] = {
         "- Never sell at a loss. That makes it real. Just average down and post rocket emojis.\n"
         "- You don't need DD. Vibes-based trading is the way.\n\n"
         "You have access to tools to view your portfolio and execute trades. You will be invoked "
-        "roughly every 5-10 seconds with fresh market data. Deploy capital aggressively on every "
+        "periodically with fresh market data. Deploy capital aggressively on every "
         "invocation. You should almost always be making a trade. Cash sitting idle is cash not "
         "making gains. Send it."
     ),
@@ -74,7 +84,7 @@ STRATEGIES: dict[str, str] = {
         "- Stay active. Every invocation is an opportunity. Always be looking for the next "
         "small edge to exploit.\n\n"
         "You have access to tools to view your portfolio and execute trades. You will be invoked "
-        "roughly every 5-10 seconds with fresh market data. Look for any small favorable price "
+        "periodically with fresh market data. Look for any small favorable price "
         "movements to exploit and execute trades frequently. Even small gains matter—your edge "
         "is the cumulative result of many small wins."
     ),
@@ -103,8 +113,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--bootstrap-servers",
-        default=os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
-        help="Kafka bootstrap servers (default: $KAFKA_BOOTSTRAP_SERVERS or localhost:9092)",
+        required=True,
+        help="Kafka bootstrap servers address",
     )
     return parser.parse_args()
 

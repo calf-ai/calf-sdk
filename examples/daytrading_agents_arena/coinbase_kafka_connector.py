@@ -25,13 +25,14 @@ import logging
 import os
 import signal
 import sys
+import time
 
-import uuid_utils
 import websockets
 from pydantic import BaseModel
 
 from calfkit.broker.broker import BrokerClient
 from calfkit.nodes.agent_router_node import AgentRouterNode
+from calfkit.runners.service_client import RouterServiceClient
 from examples.daytrading_agents_arena.coinbase_consumer import CandleBook, poll_rest
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,8 @@ DEFAULT_PRODUCTS = [
 ]
 
 RECONNECT_DELAY_SECONDS = 3
+
+PRICE_TOPIC = "market_data.prices"
 
 
 class TickerMessage(BaseModel):
@@ -73,7 +76,7 @@ class CoinbaseKafkaConnector:
 
     Connects to the Coinbase Exchange WebSocket ticker_batch channel
     and invokes the configured AgentRouterNode with each price update
-    using fire-and-forget publishes (no response subscriber).
+    using fire-and-forget publishes via RouterServiceClient.
 
     When min_publish_interval is set, incoming tickers are buffered per
     product ID. Only the latest data for each product is kept. A product's
@@ -90,7 +93,7 @@ class CoinbaseKafkaConnector:
         candle_book: CandleBook | None = None,
     ) -> None:
         self._broker = broker
-        self._router_node = router_node
+        self._client = RouterServiceClient(broker, router_node)
         self._products = products
         self._min_interval = min_publish_interval
         self._running = True
@@ -170,10 +173,9 @@ class CoinbaseKafkaConnector:
                 f"{self._candle_book.format_prompt(self._products)}"
             )
 
-        await self._router_node.invoke(
+        await self._client.invoke(
             user_prompt="\n".join(prompt_parts),
-            broker=self._broker,
-            correlation_id=uuid_utils.uuid7().hex,
+            deps={"invoked_at": time.time()},
         )
 
         summary = ", ".join(f"{t.product_id} @ ${t.price}" for t in batch)
@@ -238,6 +240,7 @@ class CoinbaseKafkaConnector:
 
                     ticker = TickerMessage.model_validate(data)
                     self._latest[ticker.product_id] = ticker
+                    await self._broker.publish(ticker, PRICE_TOPIC)
             finally:
                 flush_task.cancel()
                 try:

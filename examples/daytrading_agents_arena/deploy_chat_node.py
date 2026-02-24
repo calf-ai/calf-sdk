@@ -53,14 +53,14 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--bootstrap-servers",
-        default=os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
-        help="Kafka bootstrap servers (default: $KAFKA_BOOTSTRAP_SERVERS or localhost:9092)",
+        required=True,
+        help="Kafka bootstrap servers address",
     )
     parser.add_argument(
         "--max-workers",
         type=int,
-        default=10,
-        help="Concurrent inference workers (default: 10)",
+        default=1,
+        help="Concurrent inference workers (default: 1)",
     )
     parser.add_argument(
         "--reasoning-effort",

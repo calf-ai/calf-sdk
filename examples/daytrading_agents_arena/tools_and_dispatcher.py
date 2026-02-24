@@ -2,22 +2,28 @@ import asyncio
 import logging
 import os
 
+from dotenv import load_dotenv
 from rich.live import Live
 
 from calfkit.broker.broker import BrokerClient
 from calfkit.runners.service import NodesService
+from examples.daytrading_agents_arena.coinbase_kafka_connector import (
+    PRICE_TOPIC,
+    TickerMessage,
+)
 from examples.daytrading_agents_arena.trading_tools import (
+    calculator,
     execute_trade,
     get_portfolio,
-    run_price_feed,
+    price_book,
     store,
     view,
 )
 
-# Tools & Price Feed — Deploys trading tool workers and the Coinbase
-# price feed.
+# Tools & Price Feed — Deploys trading tool workers and subscribes
+# to the Kafka price topic published by the connector.
 #
-# The price feed hydrates the shared price book that the trading
+# The price subscriber hydrates the shared price book that the trading
 # tools read from when executing trades.
 #
 # Usage:
@@ -25,6 +31,8 @@ from examples.daytrading_agents_arena.trading_tools import (
 #
 # Prerequisites:
 #     - Kafka broker running at localhost:9092
+
+load_dotenv()
 
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 
@@ -40,32 +48,27 @@ async def main():
     print("Tools & Price Feed Deployment")
     print("=" * 50)
 
-    # Pre-create agent accounts so they appear immediately
-    for agent_id in ("momentum", "brainrot-daytrader", "scalper"):
-        store.get_or_create(agent_id)
-
     print(f"\nConnecting to Kafka broker at {KAFKA_BOOTSTRAP_SERVERS}...")
     broker = BrokerClient(bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS)
     service = NodesService(broker)
 
     # ── Tool nodes ───────────────────────────────────────────────
     print("\nRegistering trading tool nodes...")
-    for tool in (execute_trade, get_portfolio):
+    for tool in (execute_trade, get_portfolio, calculator):
         service.register_node(tool)
         print(f"  - {tool.tool_schema.name} (topic: {tool.subscribed_topic})")
 
-    # ── Price feed ───────────────────────────────────────────────
-    print("\nStarting Coinbase price feed...")
-    price_feed_task = asyncio.create_task(run_price_feed())
+    # ── Price subscriber ─────────────────────────────────────────
+    @broker.subscriber(PRICE_TOPIC, group_id="tools-dashboard")
+    async def handle_price_update(ticker: TickerMessage) -> None:
+        price_book.update(ticker.model_dump())
+        view.rerender()
 
-    print("\nStarting portfolio dashboard...")
+    print("\nStarting portfolio dashboard (prices via Kafka)...")
 
     with Live(view._build_layout(), auto_refresh=False, screen=True) as live:
         view.attach_live(live)
-        try:
-            await service.run()
-        finally:
-            price_feed_task.cancel()
+        await service.run()
 
 
 if __name__ == "__main__":

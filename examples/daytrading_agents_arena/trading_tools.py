@@ -3,8 +3,8 @@ Trading Tool — an @agent_tool that executes buy/sell trades against
 an in-memory portfolio store and rerenders a Rich Live dashboard
 after every trade.
 
-Prices are sourced from the Coinbase Exchange WebSocket (ticker_batch)
-which runs as a background task and keeps a live price book.
+Prices are sourced from a Kafka topic (market_data.prices) published
+by the Coinbase connector, which keeps a live price book.
 
 The account store is keyed by agent_id so multiple agent runtimes
 can each maintain independent portfolios.  The agent_id is resolved
@@ -17,14 +17,17 @@ Usage:
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import os
+import time
+import typing
+from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
 
+import plotext as plt
 import sympy
-import websockets
+from rich.ansi import AnsiDecoder
 from rich.columns import Columns
 from rich.layout import Layout
 from rich.live import Live
@@ -36,7 +39,7 @@ from calfkit.broker.broker import BrokerClient
 from calfkit.models.tool_context import ToolContext
 from calfkit.nodes.base_tool_node import agent_tool
 from calfkit.runners.service import NodesService
-from examples.daytrading_agents_arena.coinbase_consumer import COINBASE_WS_URL, PriceBook
+from examples.daytrading_agents_arena.coinbase_consumer import PriceBook
 
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 
@@ -46,13 +49,14 @@ logger = logging.getLogger(__name__)
 
 INITIAL_CASH = 100_000.0
 
-SUBSCRIBED_PRODUCTS = [
-    "BTC-USD",
-    "FARTCOIN-USD",
-    "SOL-USD",
-]
+MAX_BALANCE_HISTORY = 300  # ~25 min at 5s intervals
 
-RECONNECT_DELAY_SECONDS = 3
+AGENT_COLORS: dict[str, str] = {
+    "momentum": "cyan",
+    "brainrot-daytrader": "magenta",
+    "scalper": "yellow",
+}
+_FALLBACK_COLORS = ["green", "red", "blue", "orange", "white"]
 
 
 # ── Data model ───────────────────────────────────────────────────
@@ -98,7 +102,7 @@ class AccountStore:
 
     def __init__(self, price_book: PriceBook) -> None:
         self._accounts: dict[str, AgentAccount] = {}
-        self._trade_log: list[tuple[str, str, str, str, int, float]] = []
+        self._trade_log: list[tuple[str, str, str, str, int, float, float | None]] = []
         self._price_book = price_book
 
     def get_or_create(self, agent_id: str) -> AgentAccount:
@@ -115,7 +119,7 @@ class AccountStore:
         return self._price_book
 
     @property
-    def trade_log(self) -> list[tuple[str, str, str, str, int, float]]:
+    def trade_log(self) -> list[tuple[str, str, str, str, int, float, float | None]]:
         return self._trade_log
 
     def execute_trade(
@@ -124,6 +128,7 @@ class AccountStore:
         product_id: str,
         quantity: int,
         action: str,
+        latency: float | None = None,
     ) -> TradeResult:
         product_id = product_id.upper().strip()
         action = action.lower().strip()
@@ -163,7 +168,7 @@ class AccountStore:
             account.positions[product_id] = existing_qty + quantity
             account.cost_basis[product_id] = account.cost_basis.get(product_id, 0.0) + cost
             account.trade_count += 1
-            self._record_trade(agent_id, action, product_id, quantity, price)
+            self._record_trade(agent_id, action, product_id, quantity, price, latency)
             return TradeResult(
                 True,
                 f"Bought {quantity} {product_id} @ ${price:,.2f} for ${cost:,.2f}. "
@@ -208,12 +213,68 @@ class AccountStore:
         product_id: str,
         quantity: int,
         price: float,
+        latency: float | None = None,
     ) -> None:
         ts = datetime.now().strftime("%H:%M:%S")
-        self._trade_log.append((ts, agent_id, action, product_id, quantity, price))
+        self._trade_log.append((ts, agent_id, action, product_id, quantity, price, latency))
 
 
 # ── Rich Live view ───────────────────────────────────────────────
+
+
+class PlotextChart:
+    """Rich-compatible renderable that draws a plotext line chart."""
+
+    def __init__(
+        self,
+        balance_history: dict[str, deque[tuple[str, float]]],
+        chart_height: int = 12,
+    ) -> None:
+        self._balance_history = balance_history
+        self._chart_height = chart_height
+
+    def __rich_console__(
+        self, console: object, options: object
+    ) -> typing.Generator[Text, None, None]:
+        width = getattr(options, "max_width", 80)
+
+        plt.clf()
+        plt.plotsize(width, self._chart_height)
+        plt.theme("dark")
+        plt.title("Portfolio Value Over Time")
+
+        has_data = any(len(d) > 0 for d in self._balance_history.values())
+
+        if not has_data:
+            plt.plot([0, 1], [INITIAL_CASH, INITIAL_CASH], label="waiting...", color="gray")
+        else:
+            fallback_idx = 0
+            for agent_id, history in self._balance_history.items():
+                if not history:
+                    continue
+                timestamps, values = zip(*history)
+                x_indices = list(range(len(values)))
+                color = AGENT_COLORS.get(agent_id)
+                if color is None:
+                    color = _FALLBACK_COLORS[fallback_idx % len(_FALLBACK_COLORS)]
+                    fallback_idx += 1
+                plt.plot(x_indices, list(values), label=agent_id, color=color)
+
+            # Build evenly-spaced time tick labels from the longest series
+            longest = max(self._balance_history.values(), key=len)
+            n = len(longest)
+            num_ticks = min(7, n)
+            if num_ticks > 1:
+                step = (n - 1) / (num_ticks - 1)
+                positions = [int(round(i * step)) for i in range(num_ticks)]
+            else:
+                positions = [0]
+            labels = [longest[p][0] for p in positions]
+            plt.xticks(positions, labels)
+
+        canvas = plt.build()
+        decoder = AnsiDecoder()
+        yield from decoder.decode(canvas)
 
 
 class PortfolioView:
@@ -222,13 +283,24 @@ class PortfolioView:
     def __init__(self, store: AccountStore) -> None:
         self._store = store
         self._live: Live | None = None
+        self._balance_history: dict[str, deque[tuple[str, float]]] = {}
 
     def attach_live(self, live: Live) -> None:
         self._live = live
 
     def rerender(self) -> None:
         if self._live is not None:
+            self._capture_balance_snapshot()
             self._live.update(self._build_layout(), refresh=True)
+
+    def _capture_balance_snapshot(self) -> None:
+        price_book = self._store.price_book
+        ts = datetime.now().strftime("%H:%M:%S")
+        for agent_id, account in self._store.accounts.items():
+            if agent_id not in self._balance_history:
+                self._balance_history[agent_id] = deque(maxlen=MAX_BALANCE_HISTORY)
+            value = account.portfolio_value(price_book)
+            self._balance_history[agent_id].append((ts, value))
 
     def _build_layout(self) -> Layout:
         layout = Layout()
@@ -237,6 +309,7 @@ class PortfolioView:
             Layout(name="summary_header", size=1),
             Layout(name="summary", size=7),
             Layout(name="body", ratio=2),
+            Layout(name="chart", size=15),
         )
         layout["header"].update(self._build_header())
         layout["summary_header"].update(
@@ -249,7 +322,12 @@ class PortfolioView:
         )
         layout["positions"].update(self._build_positions_table())
         layout["log"].update(self._build_trade_log())
+        layout["chart"].update(self._build_chart())
         return layout
+
+    def _build_chart(self) -> Panel:
+        chart = PlotextChart(self._balance_history, chart_height=12)
+        return Panel(chart, title="[bold]Portfolio Value[/]", border_style="blue")
 
     def _build_header(self) -> Panel:
         now = datetime.now().strftime("%H:%M:%S")
@@ -365,16 +443,18 @@ class PortfolioView:
         table.add_column("Time", style="dim", ratio=1)
         table.add_column("Action", ratio=1)
         table.add_column("Qty", justify="right", ratio=1)
-        table.add_column("Product", ratio=2)
-        table.add_column("Price", justify="right", ratio=2)
+        table.add_column("Ticker", ratio=2)
+        table.add_column("Unit Price", justify="right", ratio=2)
         table.add_column("Agent", style="dim", ratio=2)
+        table.add_column("Latency", justify="right", style="dim", ratio=1)
 
         log = self._store.trade_log
         if not log:
-            table.add_row("[dim italic]No trades yet...[/]", "", "", "", "", "")
+            table.add_row("[dim italic]No trades yet...[/]", "", "", "", "", "", "")
         else:
-            for ts, agent_id, action, product_id, qty, price in reversed(log):
+            for ts, agent_id, action, product_id, qty, price, latency in reversed(log):
                 action_style = "bold green" if action == "buy" else "bold red"
+                latency_str = f"{latency:.1f}s" if latency is not None else ""
                 table.add_row(
                     ts,
                     f"[{action_style}]{action.upper()}[/]",
@@ -382,9 +462,10 @@ class PortfolioView:
                     product_id,
                     f"${price:,.2f}",
                     agent_id,
+                    latency_str,
                 )
 
-        return Panel(table, title="[bold]Trade Log[/]", border_style="yellow")
+        return Panel(table, title="[bold]Trade Log (most recent)[/]", border_style="yellow")
 
 
 # ── Module-level singletons ──────────────────────────────────────
@@ -397,8 +478,10 @@ view = PortfolioView(store)
 # ── Shared tool logic ────────────────────────────────────────────
 
 
-def _execute_trade(agent_id: str, product_id: str, quantity: int, action: str) -> str:
-    result = store.execute_trade(agent_id, product_id, quantity, action)
+def _execute_trade(
+    agent_id: str, product_id: str, quantity: int, action: str, latency: float | None = None
+) -> str:
+    result = store.execute_trade(agent_id, product_id, quantity, action, latency=latency)
     view.rerender()
     return result.message
 
@@ -477,7 +560,10 @@ def execute_trade(ctx: ToolContext, product_id: str, quantity: int, action: str)
     Returns:
         Trade confirmation with execution price and remaining cash, or an error message
     """
-    return _execute_trade(ctx.agent_name, product_id, quantity, action)
+    latency: float | None = None
+    if isinstance(ctx.deps, dict) and "invoked_at" in ctx.deps:
+        latency = time.time() - ctx.deps["invoked_at"]
+    return _execute_trade(ctx.agent_name, product_id, quantity, action, latency=latency)
 
 
 @agent_tool
@@ -515,49 +601,15 @@ def calculator(ctx: ToolContext, expression: str) -> str:
         return f"Invalid expression: {e}"
 
 
-# ── Coinbase price feed ──────────────────────────────────────────
-
-
-async def run_price_feed() -> None:
-    """Background task that keeps the price book updated from Coinbase."""
-    while True:
-        try:
-            async with websockets.connect(COINBASE_WS_URL) as ws:
-                await ws.send(
-                    json.dumps(
-                        {
-                            "type": "subscribe",
-                            "product_ids": SUBSCRIBED_PRODUCTS,
-                            "channels": ["ticker_batch"],
-                        }
-                    )
-                )
-                logger.info("Coinbase price feed connected")
-
-                async for raw in ws:
-                    data = json.loads(raw)
-                    if data.get("type") == "ticker":
-                        price_book.update(data)
-                        view.rerender()
-
-        except websockets.ConnectionClosed:
-            logger.warning(
-                "Coinbase connection lost. Reconnecting in %ds...",
-                RECONNECT_DELAY_SECONDS,
-            )
-            await asyncio.sleep(RECONNECT_DELAY_SECONDS)
-        except Exception:
-            logger.exception(
-                "Coinbase feed error. Reconnecting in %ds...",
-                RECONNECT_DELAY_SECONDS,
-            )
-            await asyncio.sleep(RECONNECT_DELAY_SECONDS)
-
-
 # ── Entrypoint ───────────────────────────────────────────────────
 
 
 async def main() -> None:
+    from examples.daytrading_agents_arena.coinbase_kafka_connector import (
+        PRICE_TOPIC,
+        TickerMessage,
+    )
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)-8s %(name)s — %(message)s",
@@ -568,10 +620,6 @@ async def main() -> None:
     print("Trading Tool Deployment")
     print("=" * 50)
 
-    # Pre-create all agent accounts so they appear on the dashboard
-    for agent_id in ("momentum", "brainrot-daytrader", "scalper"):
-        store.get_or_create(agent_id)
-
     print(f"\nConnecting to Kafka broker at {KAFKA_BOOTSTRAP_SERVERS}...")
     broker = BrokerClient(bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS)
 
@@ -581,15 +629,16 @@ async def main() -> None:
         service.register_node(tool)
         print(f"  - {tool.subscribed_topic} registered")
 
-    print("\nStarting Coinbase price feed and portfolio dashboard...")
+    @broker.subscriber(PRICE_TOPIC, group_id="tools-dashboard")
+    async def handle_price_update(ticker: TickerMessage) -> None:
+        price_book.update(ticker.model_dump())
+        view.rerender()
+
+    print("\nStarting portfolio dashboard (prices via Kafka)...")
 
     with Live(view._build_layout(), auto_refresh=False, screen=True) as live:
         view.attach_live(live)
-        price_feed_task = asyncio.create_task(run_price_feed())
-        try:
-            await service.run()
-        finally:
-            price_feed_task.cancel()
+        await service.run()
 
 
 if __name__ == "__main__":
