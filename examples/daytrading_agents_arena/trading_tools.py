@@ -347,7 +347,8 @@ class PortfolioView:
         now = datetime.now().strftime("%H:%M:%S")
         return Panel(
             Text.from_markup(
-                f"[bold cyan]Portfolio Dashboard[/]  [bold red]●[/] [bold green]LIVE[/]  [dim]|  {now}[/]"
+                "[bold cyan]Portfolio Dashboard[/]  [bold red]●[/] "
+                f"[bold green]LIVE[/]  [dim]|  {now}[/]"
             ),
             style="cyan",
             height=3,

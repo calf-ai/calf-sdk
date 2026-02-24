@@ -465,7 +465,8 @@ def test_named_chat_node_removes_shared_subscribe_topic():
     for topics in chat.bound_registry.values():
         subscribe_topics = topics.get("subscribe_topics", [])
         assert "ai_prompted" not in subscribe_topics, (
-            f"Shared topic 'ai_prompted' should be removed for named ChatNode, got {subscribe_topics}"
+            "Shared topic 'ai_prompted' should be removed for named "
+            f"ChatNode, got {subscribe_topics}"
         )
 
 
@@ -523,9 +524,7 @@ async def test_router_targets_named_chat_node():
             final_response_topic="final_response",
         )
         env_a.mark_as_start_of_turn()
-        env_a.prepare_uncommitted_agent_messages(
-            [ModelRequest.user_text_prompt("hello")]
-        )
+        env_a.prepare_uncommitted_agent_messages([ModelRequest.user_text_prompt("hello")])
         await broker.publish(
             env_a,
             topic=router_alpha.entrypoint_topic,
@@ -542,9 +541,7 @@ async def test_router_targets_named_chat_node():
             final_response_topic="final_response",
         )
         env_b.mark_as_start_of_turn()
-        env_b.prepare_uncommitted_agent_messages(
-            [ModelRequest.user_text_prompt("hello")]
-        )
+        env_b.prepare_uncommitted_agent_messages([ModelRequest.user_text_prompt("hello")])
         await broker.publish(
             env_b,
             topic=router_beta.entrypoint_topic,

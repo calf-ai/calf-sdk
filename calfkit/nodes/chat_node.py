@@ -30,13 +30,12 @@ class ChatNode(BaseNode, ABC):
             self._remove_shared_subscribe_topic()
 
     def _remove_shared_subscribe_topic(self) -> None:
-        """Remove the shared subscribe topic so a named ChatNode only listens on its private topic."""
+        """Remove the shared subscribe topic so a named ChatNode only
+        listens on its private topic."""
         for topics in self.bound_registry.values():
             shared = topics.get("shared_subscribe_topic")
             if shared and "subscribe_topics" in topics:
-                topics["subscribe_topics"] = [
-                    t for t in topics["subscribe_topics"] if t != shared
-                ]
+                topics["subscribe_topics"] = [t for t in topics["subscribe_topics"] if t != shared]
 
     @subscribe_to(_on_enter_topic_name)
     @entrypoint("ai_prompted.{name}")
