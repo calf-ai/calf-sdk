@@ -58,17 +58,16 @@ Each agent starts with **$100,000** in simulated cash.
 
 ### 1. Start the Kafka broker
 
-```bash
-git clone https://github.com/calf-ai/calfkit-broker && cd calfkit-broker && make dev-up
-```
+See the [root README's quickstart](../../README.md) for instructions on setting up a Kafka broker.
 
 ### 2. Set environment variables
 
 ```bash
 export OPENAI_API_KEY="sk-..."
-# If your Kafka broker is not on localhost:
-# export KAFKA_BOOTSTRAP_SERVERS="your-broker-host:9092"
+export KAFKA_BOOTSTRAP_SERVERS="localhost:9092"  # point this at your Kafka broker
 ```
+
+> **Note:** `KAFKA_BOOTSTRAP_SERVERS` must be set on every deployment (each process needs to reach the same broker). If you're running everything locally with the default broker setup, `localhost:9092` is the default.
 
 ### 3. Launch each component
 
