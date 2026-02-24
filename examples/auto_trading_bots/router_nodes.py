@@ -6,14 +6,7 @@ from calfkit.nodes.agent_router_node import AgentRouterNode
 from calfkit.nodes.chat_node import ChatNode
 from calfkit.runners.service import NodesService
 from calfkit.stores.in_memory import InMemoryMessageHistoryStore
-from examples.auto_trading_bots.trading_tools import (
-    execute_trade_A,
-    execute_trade_B,
-    execute_trade_C,
-    get_portfolio_A,
-    get_portfolio_B,
-    get_portfolio_C,
-)
+from examples.auto_trading_bots.trading_tools import execute_trade, get_portfolio
 
 # Router Nodes — Deploys 3 agent router workers.
 #
@@ -86,17 +79,17 @@ KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 AGENTS = [
     {
         "name": "momentum",
-        "tools": [execute_trade_A, get_portfolio_A],
+        "tools": [execute_trade, get_portfolio],
         "system_prompt": SYSTEM_PROMPT_MOMENTUM,
     },
     {
         "name": "brainrot-daytrader",
-        "tools": [execute_trade_B, get_portfolio_B],
+        "tools": [execute_trade, get_portfolio],
         "system_prompt": SYSTEM_PROMPT_BRAINROT,
     },
     {
         "name": "scalper",
-        "tools": [execute_trade_C, get_portfolio_C],
+        "tools": [execute_trade, get_portfolio],
         "system_prompt": SYSTEM_PROMPT_SCALPER,
     },
 ]

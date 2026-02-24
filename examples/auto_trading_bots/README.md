@@ -12,7 +12,7 @@ This example shows how event-driven agents built with Calfkit can consume real-t
 - **Fan-out via consumer groups**: All three agents subscribe to the same Kafka topic with separate consumer group IDs. Each agent independently receives and processes every market data update without blocking the others.
 - **Truly distributed deployment**: Each component (ChatNode, routers, tools, connector) is a standalone process that communicates only through Kafka. They can run on the same machine, on separate servers, in different containers, or across different cloud regions — as long as they share a Kafka broker.
 - **Independent scaling**: Any component can be scaled, restarted, or redeployed without affecting the rest of the system.
-- **Dynamic tool registration**: An `AgentDispatcher` supports onboarding new agents at runtime without redeploying existing services.
+- **Shared tools via ToolContext**: A single deployed set of trading tools serves all agents. Each tool automatically receives the calling agent's identity at runtime via `ToolContext` injection, so adding a new agent requires zero changes to the tools deployment.
 - **Live dashboard**: A Rich terminal dashboard renders portfolio state, positions, and a trade log in real time.
 
 ## Architecture
@@ -34,7 +34,7 @@ CoinbaseKafkaConnector ── buffers ticks, publishes every 15s ──▶ Kafka
                                                     Trading Tools ──▶ AccountStore ──▶ Dashboard
 ```
 
-Each agent has its own system prompt, conversation history, and isolated set of trading tools. They share the ChatNode for LLM inference and the AccountStore for trade execution.
+Each agent has its own system prompt and conversation history. They share the ChatNode for LLM inference, a single set of trading tools (which resolve the calling agent via ToolContext), and the AccountStore for trade execution.
 
 Every box in this diagram is an independent process. They don't import each other or share memory — they only communicate through Kafka topics. This means each component can live on a completely different machine.
 
@@ -88,7 +88,7 @@ uv run python examples/auto_trading_bots/chat_node.py
 uv run python examples/auto_trading_bots/router_nodes.py
 ```
 
-**Deployment 3 — Tools, Dispatcher & Dashboard** (trading tools + live portfolio UI)
+**Deployment 3 — Tools & Dashboard** (trading tools + live portfolio UI)
 
 ```bash
 uv run python examples/auto_trading_bots/tools_and_dispatcher.py
@@ -146,5 +146,5 @@ These values can be adjusted directly in source:
 | `coinbase_connector.py` | Entry point that streams Coinbase data to the deployed agents |
 | `coinbase_kafka_connector.py` | Core connector class bridging Coinbase WebSocket to Kafka |
 | `coinbase_consumer.py` | Standalone Coinbase WebSocket consumer (reference/utility) |
-| `tools_and_dispatcher.py` | Deploys trading tools, agent dispatcher, price feed, and dashboard |
-| `trading_tools.py` | Trading engine, account store, portfolio view, and tool definitions |
+| `tools_and_dispatcher.py` | Deploys trading tools, price feed, and dashboard |
+| `trading_tools.py` | Trading engine, account store, portfolio view, and shared tool definitions (using ToolContext) |

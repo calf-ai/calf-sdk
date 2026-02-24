@@ -7,8 +7,8 @@ Prices are sourced from the Coinbase Exchange WebSocket (ticker_batch)
 which runs as a background task and keeps a live price book.
 
 The account store is keyed by agent_id so multiple agent runtimes
-can each maintain independent portfolios.  For now the agent_id
-inside the tool is hardcoded.
+can each maintain independent portfolios.  The agent_id is resolved
+at runtime via ToolContext injection (ctx.agent_name).
 
 Usage:
     uv run python examples/trading_tool.py
@@ -32,7 +32,8 @@ from rich.table import Table
 from rich.text import Text
 
 from calfkit.broker.broker import BrokerClient
-from calfkit.nodes.base_tool_node import BaseToolNode, agent_tool
+from calfkit.models.tool_context import ToolContext
+from calfkit.nodes.base_tool_node import agent_tool
 from calfkit.runners.service import NodesService
 from examples.auto_trading_bots.coinbase_consumer import COINBASE_WS_URL, PriceBook
 
@@ -41,10 +42,6 @@ KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 logger = logging.getLogger(__name__)
 
 # ── Configuration ────────────────────────────────────────────────
-
-AGENT_ID_A = "momentum"
-AGENT_ID_B = "brainrot-daytrader"
-AGENT_ID_C = "scalper"
 
 INITIAL_CASH = 100_000.0
 
@@ -414,59 +411,11 @@ def _get_portfolio(agent_id: str) -> str:
     return "\n".join(lines)
 
 
-# ── Tool factory ──────────────────────────────────────────────────
-
-
-def make_trading_tools(agent_id: str) -> tuple[BaseToolNode, BaseToolNode]:
-    """Create execute_trade and get_portfolio tool nodes for a given agent.
-
-    Each returned tool has a unique ``__name__`` (and therefore unique Kafka
-    topics) with the ``agent_id`` baked into its closure so callers never need
-    to pass it explicitly.
-
-    Args:
-        agent_id: Unique identifier for the agent (e.g., "agent-A").
-
-    Returns:
-        A (execute_trade, get_portfolio) pair of BaseToolNode instances.
-    """
-    safe_id = agent_id.replace("-", "_")
-
-    def execute_trade(product_id: str, quantity: int, action: str) -> str:
-        """Execute a buy or sell trade for a crypto product.
-
-        Args:
-            product_id: The trading pair to trade (e.g., BTC-USD, ETH-USD, SOL-USD)
-            quantity: The number of units to buy or sell (must be a positive integer)
-            action: Either 'buy' or 'sell'
-
-        Returns:
-            A message describing the trade result including updated cash balance
-        """
-        return _execute_trade(agent_id, product_id, quantity, action)
-
-    def get_portfolio() -> str:
-        """Get the current portfolio summary including cash, positions, and cost basis.
-
-        Returns:
-            A detailed breakdown of cash held, each product owned with quantity,
-            current market price, cost basis per unit, and total portfolio value
-        """
-        return _get_portfolio(agent_id)
-
-    execute_trade.__name__ = f"execute_trade_{safe_id}"
-    execute_trade.__qualname__ = f"execute_trade_{safe_id}"
-    get_portfolio.__name__ = f"get_portfolio_{safe_id}"
-    get_portfolio.__qualname__ = f"get_portfolio_{safe_id}"
-
-    return agent_tool(execute_trade), agent_tool(get_portfolio)
-
-
-# ── Agent tools (A / B / C) ─────────────────────────────────────
+# ── Shared agent tools (ToolContext injection) ───────────────────
 
 
 @agent_tool
-def execute_trade_A(product_id: str, quantity: int, action: str) -> str:  # noqa: N802
+def execute_trade(ctx: ToolContext, product_id: str, quantity: int, action: str) -> str:
     """Execute a buy or sell trade for a crypto product.
 
     Args:
@@ -477,70 +426,18 @@ def execute_trade_A(product_id: str, quantity: int, action: str) -> str:  # noqa
     Returns:
         A message describing the trade result including updated cash balance
     """
-    return _execute_trade(AGENT_ID_A, product_id, quantity, action)
+    return _execute_trade(ctx.agent_name, product_id, quantity, action)
 
 
 @agent_tool
-def execute_trade_B(product_id: str, quantity: int, action: str) -> str:  # noqa: N802
-    """Execute a buy or sell trade for a crypto product.
-
-    Args:
-        product_id: The trading pair to trade (e.g., BTC-USD, ETH-USD, SOL-USD)
-        quantity: The number of units to buy or sell (must be a positive integer)
-        action: Either 'buy' or 'sell'
-
-    Returns:
-        A message describing the trade result including updated cash balance
-    """
-    return _execute_trade(AGENT_ID_B, product_id, quantity, action)
-
-
-@agent_tool
-def execute_trade_C(product_id: str, quantity: int, action: str) -> str:  # noqa: N802
-    """Execute a buy or sell trade for a crypto product.
-
-    Args:
-        product_id: The trading pair to trade (e.g., BTC-USD, ETH-USD, SOL-USD)
-        quantity: The number of units to buy or sell (must be a positive integer)
-        action: Either 'buy' or 'sell'
-
-    Returns:
-        A message describing the trade result including updated cash balance
-    """
-    return _execute_trade(AGENT_ID_C, product_id, quantity, action)
-
-
-@agent_tool
-def get_portfolio_A() -> str:  # noqa: N802
+def get_portfolio(ctx: ToolContext) -> str:
     """Get the current portfolio summary including cash, positions, and cost basis.
 
     Returns:
         A detailed breakdown of cash held, each product owned with quantity,
         current market price, cost basis per unit, and total portfolio value
     """
-    return _get_portfolio(AGENT_ID_A)
-
-
-@agent_tool
-def get_portfolio_B() -> str:  # noqa: N802
-    """Get the current portfolio summary including cash, positions, and cost basis.
-
-    Returns:
-        A detailed breakdown of cash held, each product owned with quantity,
-        current market price, cost basis per unit, and total portfolio value
-    """
-    return _get_portfolio(AGENT_ID_B)
-
-
-@agent_tool
-def get_portfolio_C() -> str:  # noqa: N802
-    """Get the current portfolio summary including cash, positions, and cost basis.
-
-    Returns:
-        A detailed breakdown of cash held, each product owned with quantity,
-        current market price, cost basis per unit, and total portfolio value
-    """
-    return _get_portfolio(AGENT_ID_C)
+    return _get_portfolio(ctx.agent_name)
 
 
 # ── Coinbase price feed ──────────────────────────────────────────
@@ -597,21 +494,14 @@ async def main() -> None:
     print("=" * 50)
 
     # Pre-create all agent accounts so they appear on the dashboard
-    for agent_id in (AGENT_ID_A, AGENT_ID_B, AGENT_ID_C):
+    for agent_id in ("momentum", "brainrot-daytrader", "scalper"):
         store.get_or_create(agent_id)
 
     print(f"\nConnecting to Kafka broker at {KAFKA_BOOTSTRAP_SERVERS}...")
     broker = BrokerClient(bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS)
 
     service = NodesService(broker)
-    all_tools = [
-        execute_trade_A,
-        execute_trade_B,
-        execute_trade_C,
-        get_portfolio_A,
-        get_portfolio_B,
-        get_portfolio_C,
-    ]
+    all_tools = [execute_trade, get_portfolio]
     for tool in all_tools:
         service.register_node(tool)
         print(f"  - {tool.subscribed_topic} registered")
