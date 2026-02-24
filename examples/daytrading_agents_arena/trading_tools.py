@@ -391,12 +391,13 @@ class PortfolioView:
         table.add_column("Qty", justify="right", ratio=1)
         table.add_column("Cost Basis", justify="right", ratio=2)
         table.add_column("Mkt Value", justify="right", ratio=2)
+        table.add_column("P&L", justify="right", ratio=2)
         table.add_column("Total Value", justify="right", ratio=2)
 
         accounts = self._store.accounts
         price_book = self._store.price_book
         if not accounts:
-            table.add_row("[dim]No accounts yet[/]", "", "", "", "", "", "", "")
+            table.add_row("[dim]No accounts yet[/]", "", "", "", "", "", "", "", "")
         else:
             first = True
             for agent_id, account in accounts.items():
@@ -404,11 +405,13 @@ class PortfolioView:
                     table.add_section()
                 first = False
                 total_value = account.portfolio_value(price_book)
+                total_pnl = total_value - INITIAL_CASH
                 # Agent header row with cash
                 table.add_row(
                     agent_id,
                     str(account.trade_count),
                     f"[green]${account.cash:,.2f}[/]",
+                    "",
                     "",
                     "",
                     "",
@@ -425,6 +428,7 @@ class PortfolioView:
                         "[dim]—[/]",
                         "[dim]—[/]",
                         "[dim]—[/]",
+                        "[dim]—[/]",
                         "",
                     )
                 else:
@@ -433,6 +437,9 @@ class PortfolioView:
                         price = float(entry["price"]) if entry else 0.0
                         mkt_val = price * qty
                         cost_basis = account.cost_basis.get(pid, 0.0)
+                        pnl = mkt_val - cost_basis
+                        pnl_color = "green" if pnl >= 0 else "red"
+                        pnl_sign = "+" if pnl >= 0 else ""
                         table.add_row(
                             "",
                             "",
@@ -441,9 +448,12 @@ class PortfolioView:
                             f"{qty:g}",
                             f"${cost_basis:,.2f}",
                             f"${mkt_val:,.2f}",
+                            f"[{pnl_color}]{pnl_sign}${pnl:,.2f}[/]",
                             "",
                         )
                 # Total value row
+                total_pnl_color = "green" if total_pnl >= 0 else "red"
+                total_pnl_sign = "+" if total_pnl >= 0 else ""
                 table.add_row(
                     "",
                     "",
@@ -452,6 +462,7 @@ class PortfolioView:
                     "",
                     "",
                     "[bold]Total[/]",
+                    f"[bold {total_pnl_color}]{total_pnl_sign}${total_pnl:,.2f}[/]",
                     f"[bold]${total_value:,.2f}[/]",
                 )
 
@@ -569,7 +580,9 @@ def _get_portfolio(agent_id: str) -> str:
 
 @agent_tool
 def execute_trade(ctx: ToolContext, product_id: str, quantity: float, action: str) -> str:
-    """Execute a buy or sell trade. Buys execute at the best ask price, sells at the best bid.
+    """Execute a buy or sell trade (fill-or-cancel). The order fills immediately at the current
+    market price if possible, or returns an error if it cannot be filled — it never waits or queues.
+    Buys execute at the best ask price, sells at the best bid.
     Fractional share trading is allowed, but only to one decimal place (e.g., 0.5, 1.2).
 
     Args:
