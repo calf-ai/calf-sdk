@@ -249,23 +249,30 @@ class PlotextChart:
         plt.plotsize(width, self._chart_height)
         plt.theme("dark")
         plt.title("Portfolio Value Over Time")
+        plt.ylabel("USD")
 
         has_data = any(len(d) > 0 for d in self._balance_history.values())
 
         if not has_data:
             plt.plot([0, 1], [INITIAL_CASH, INITIAL_CASH], label="waiting...", color="gray")
         else:
+            # Right-align all series so the latest snapshot is always at
+            # the right edge, regardless of when each agent started.
+            max_len = max(len(h) for h in self._balance_history.values())
+
             fallback_idx = 0
             for agent_id, history in self._balance_history.items():
                 if not history:
                     continue
                 timestamps, values = zip(*history)
-                x_indices = list(range(len(values)))
+                n = len(values)
+                offset = max_len - n
+                x_indices = list(range(offset, offset + n))
                 color = AGENT_COLORS.get(agent_id)
                 if color is None:
                     color = _FALLBACK_COLORS[fallback_idx % len(_FALLBACK_COLORS)]
                     fallback_idx += 1
-                plt.plot(x_indices, list(values), label=agent_id, color=color)
+                plt.plot(x_indices, list(values), label=agent_id, color=color, marker="braille")
 
             # Build evenly-spaced time tick labels from the longest series
             longest = max(self._balance_history.values(), key=len)
@@ -334,13 +341,13 @@ class PortfolioView:
 
     def _build_chart(self) -> Panel:
         chart = PlotextChart(self._balance_history, chart_height=12)
-        return Panel(chart, title="[bold]Portfolio Value[/]", border_style="blue")
+        return Panel(chart, border_style="blue")
 
     def _build_header(self) -> Panel:
         now = datetime.now().strftime("%H:%M:%S")
         return Panel(
             Text.from_markup(
-                f"[bold cyan]Portfolio Dashboard[/]  [bold green]● LIVE[/]  [dim]|  {now}[/]"
+                f"[bold cyan]Portfolio Dashboard[/]  [bold red]●[/] [bold green]LIVE[/]  [dim]|  {now}[/]"
             ),
             style="cyan",
             height=3,
@@ -351,7 +358,12 @@ class PortfolioView:
         price_book = self._store.price_book
 
         cards = []
-        for agent_id, account in accounts.items():
+        sorted_accounts = sorted(
+            accounts.items(),
+            key=lambda item: item[1].portfolio_value(price_book),
+            reverse=True,
+        )
+        for rank, (agent_id, account) in enumerate(sorted_accounts, start=1):
             value = account.portfolio_value(price_book)
             card = Panel(
                 Text.from_markup(
@@ -359,7 +371,7 @@ class PortfolioView:
                     f"[yellow]Positions:[/] {len(account.positions)}  "
                     f"[cyan]Trades:[/] {account.trade_count}"
                 ),
-                title=f"[bold]{agent_id} account summary[/]",
+                title=f"[bold]#{rank} {agent_id}[/]",
                 border_style="cyan",
             )
             cards.append(card)

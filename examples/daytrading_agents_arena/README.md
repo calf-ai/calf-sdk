@@ -19,7 +19,7 @@ Each box is an independent process communicating only through Kafka. They can ru
 Key design points:
 - **Per-agent model selection**: Each agent targets a named ChatNode, so different agents can use different LLMs.
 - **Fan-out via consumer groups**: Every agent independently receives every market data update.
-- **Shared tools via ToolContext**: A single set of trading tools serves all agents. Each tool receives the calling agent's identity at runtime, so adding a new agent requires zero changes to the tools deployment.
+- **Shared tools via ToolContext**: A single set of trading tools serves all agents — each tool resolves the calling agent's identity at runtime.
 - **Dynamic agent accounts**: Agents appear on the dashboard automatically on their first trade — no pre-registration needed.
 
 ## Prerequisites
@@ -40,7 +40,7 @@ Then launch each component in its own terminal. All components need access to th
 
 ### 1. Deploy a ChatNode (LLM inference)
 
-Deploy one ChatNode per model you want to use. Each gets a name that agents reference.
+Deploy one ChatNode per model. Multiple agents can share the same ChatNode.
 
 ```bash
 # OpenAI model
@@ -54,13 +54,9 @@ uv run python examples/daytrading_agents_arena/deploy_chat_node.py \
     --base-url https://api.deepinfra.com/v1/openai --api-key <key>
 ```
 
-The API key defaults to `$OPENAI_API_KEY` if `--api-key` is not provided.
-
-To use another model, deploy another ChatNode with a different name. Multiple agents can share the same ChatNode if they use the same model.
-
 ### 2. Deploy agent routers
 
-Deploy one router per agent. Each router targets a ChatNode by name and uses a trading strategy.
+Deploy one router per agent. Each targets a ChatNode by name and uses a trading strategy. See `deploy_router_node.py` for the full system prompts.
 
 ```bash
 uv run python examples/daytrading_agents_arena/deploy_router_node.py \
@@ -71,10 +67,6 @@ uv run python examples/daytrading_agents_arena/deploy_router_node.py \
     --name agent-minimax --chat-node-name minimax --strategy momentum \
     --bootstrap-servers <broker>
 ```
-
-Built-in strategies: `default`, `momentum`, `brainrot`, `scalper`. See `deploy_router_node.py` for the full system prompts.
-
-To add more agents, repeat this step with a new name. Each agent can target any deployed ChatNode.
 
 ### 3. Deploy tools & dashboard
 
@@ -128,7 +120,7 @@ Once the connector starts, market data flows to all agents and trades appear on 
 | File | Constant | Default | Description |
 |------|----------|---------|-------------|
 | `trading_tools.py` | `INITIAL_CASH` | `100_000.0` | Starting cash balance per agent |
-| `trading_tools.py` | `SUBSCRIBED_PRODUCTS` | 3 products | Products tracked by the price feed |
+| `coinbase_kafka_connector.py` | `DEFAULT_PRODUCTS` | 3 products | Products tracked by the price feed |
 
 ## File Overview
 
@@ -138,6 +130,6 @@ Once the connector starts, market data flows to all agents and trades appear on 
 | `deploy_router_node.py` | Deploys a named agent router (one per agent) |
 | `tools_and_dispatcher.py` | Deploys trading tools, price feed, and dashboard |
 | `coinbase_connector.py` | Streams live Coinbase market data to agents |
-| `coinbase_kafka_connector.py` | Core connector bridging Coinbase WebSocket + REST to Kafka |
-| `coinbase_consumer.py` | Coinbase WebSocket/REST consumer with multi-timeframe CandleBook |
+| `coinbase_kafka_connector.py` | WebSocket ticker stream + periodic Kafka publishing to agents |
+| `coinbase_consumer.py` | REST candle polling + in-memory PriceBook and CandleBook |
 | `trading_tools.py` | Trading engine, account store, portfolio view, and tool definitions |

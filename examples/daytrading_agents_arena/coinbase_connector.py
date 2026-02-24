@@ -21,8 +21,8 @@ from examples.daytrading_agents_arena.coinbase_kafka_connector import (
 #
 # Prerequisites:
 #     - Kafka broker running (set KAFKA_BOOTSTRAP_SERVERS env var, default: localhost:9092)
-#     - Router nodes deployed (router_nodes.py)
-#     - Chat node deployed (chat_node.py)
+#     - Router nodes deployed (deploy_router_node.py)
+#     - Chat node deployed (deploy_chat_node.py)
 #     - Tools deployed (tools_and_dispatcher.py)
 
 load_dotenv()
