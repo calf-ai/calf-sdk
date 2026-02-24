@@ -18,7 +18,7 @@ KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 # Handles all LLM chat requests from the agent router nodes.
 #
 # Usage:
-#     uv run python examples/auto_trading_bots/chat_node.py
+#     uv run python examples/daytrading_agents_arena/chat_node.py
 #
 # Prerequisites:
 #     - Kafka broker running at localhost:9092

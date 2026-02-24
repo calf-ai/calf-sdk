@@ -23,6 +23,7 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime
 
+import sympy
 import websockets
 from rich.columns import Columns
 from rich.layout import Layout
@@ -35,7 +36,7 @@ from calfkit.broker.broker import BrokerClient
 from calfkit.models.tool_context import ToolContext
 from calfkit.nodes.base_tool_node import agent_tool
 from calfkit.runners.service import NodesService
-from examples.auto_trading_bots.coinbase_consumer import COINBASE_WS_URL, PriceBook
+from examples.daytrading_agents_arena.coinbase_consumer import COINBASE_WS_URL, PriceBook
 
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 
@@ -47,13 +48,8 @@ INITIAL_CASH = 100_000.0
 
 SUBSCRIBED_PRODUCTS = [
     "BTC-USD",
-    "ETH-USD",
+    "FARTCOIN-USD",
     "SOL-USD",
-    "XRP-USD",
-    "DOGE-USD",
-    "AVAX-USD",
-    "LINK-USD",
-    "DOT-USD",
 ]
 
 RECONNECT_DELAY_SECONDS = 3
@@ -73,6 +69,8 @@ class AgentAccount:
     cash: float = INITIAL_CASH
     positions: dict[str, int] = field(default_factory=dict)
     cost_basis: dict[str, float] = field(default_factory=dict)
+    # Weighted-average entry timestamp (Unix epoch) per position
+    avg_entry_ts: dict[str, float] = field(default_factory=dict)
     trade_count: int = 0
 
     def portfolio_value(self, price_book: PriceBook) -> float:
@@ -156,7 +154,13 @@ class AccountStore:
                     f"Insufficient cash. Need ${cost:,.2f} but only have ${account.cash:,.2f}.",
                 )
             account.cash -= cost
-            account.positions[product_id] = account.positions.get(product_id, 0) + quantity
+            existing_qty = account.positions.get(product_id, 0)
+            now_ts = datetime.now().timestamp()
+            existing_ts = account.avg_entry_ts.get(product_id, now_ts)
+            account.avg_entry_ts[product_id] = (existing_qty * existing_ts + quantity * now_ts) / (
+                existing_qty + quantity
+            )
+            account.positions[product_id] = existing_qty + quantity
             account.cost_basis[product_id] = account.cost_basis.get(product_id, 0.0) + cost
             account.trade_count += 1
             self._record_trade(agent_id, action, product_id, quantity, price)
@@ -186,6 +190,7 @@ class AccountStore:
         if new_qty == 0:
             del account.positions[product_id]
             del account.cost_basis[product_id]
+            account.avg_entry_ts.pop(product_id, None)
         else:
             account.positions[product_id] = new_qty
         account.trade_count += 1
@@ -206,8 +211,6 @@ class AccountStore:
     ) -> None:
         ts = datetime.now().strftime("%H:%M:%S")
         self._trade_log.append((ts, agent_id, action, product_id, quantity, price))
-        if len(self._trade_log) > 20:
-            self._trade_log.pop(0)
 
 
 # ── Rich Live view ───────────────────────────────────────────────
@@ -231,22 +234,29 @@ class PortfolioView:
         layout = Layout()
         layout.split_column(
             Layout(name="header", size=3),
+            Layout(name="summary_header", size=1),
             Layout(name="summary", size=7),
-            Layout(name="positions", ratio=2),
-            Layout(name="log", ratio=1),
-            Layout(name="footer", size=3),
+            Layout(name="body", ratio=2),
         )
         layout["header"].update(self._build_header())
+        layout["summary_header"].update(
+            Text.from_markup("[bold]Agent Account Summaries[/]", justify="center")
+        )
         layout["summary"].update(self._build_summary_cards())
+        layout["body"].split_row(
+            Layout(name="positions", ratio=3),
+            Layout(name="log", ratio=2),
+        )
         layout["positions"].update(self._build_positions_table())
         layout["log"].update(self._build_trade_log())
-        layout["footer"].update(self._build_footer())
         return layout
 
     def _build_header(self) -> Panel:
         now = datetime.now().strftime("%H:%M:%S")
         return Panel(
-            Text.from_markup(f"[bold cyan]Portfolio Dashboard[/]  [dim]|  {now}[/]"),
+            Text.from_markup(
+                f"[bold cyan]Portfolio Dashboard[/]  [bold green]● LIVE[/]  [dim]|  {now}[/]"
+            ),
             style="cyan",
             height=3,
         )
@@ -265,7 +275,7 @@ class PortfolioView:
                     f"[yellow]Positions:[/] {len(account.positions)}  "
                     f"[cyan]Trades:[/] {account.trade_count}"
                 ),
-                title=f"[bold]{agent_id}[/]",
+                title=f"[bold]{agent_id} account summary[/]",
                 border_style="cyan",
             )
             cards.append(card)
@@ -276,7 +286,7 @@ class PortfolioView:
         return Columns(cards, expand=True, equal=True)
 
     def _build_positions_table(self) -> Panel:
-        table = Table(expand=True, show_lines=True)
+        table = Table(expand=True, show_lines=False)
         table.add_column("Agent", style="bold cyan", ratio=2)
         table.add_column("Trades", justify="right", ratio=1)
         table.add_column("Cash", justify="right", ratio=2)
@@ -291,17 +301,34 @@ class PortfolioView:
         if not accounts:
             table.add_row("[dim]No accounts yet[/]", "", "", "", "", "", "", "")
         else:
+            first = True
             for agent_id, account in accounts.items():
+                if not first:
+                    table.add_section()
+                first = False
                 total_value = account.portfolio_value(price_book)
                 # Agent header row
                 table.add_row(
-                    agent_id, str(account.trade_count),
-                    "", "", "", "", "", "",
+                    agent_id,
+                    str(account.trade_count),
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
                 )
                 # Individual ticker rows
                 if not account.positions:
                     table.add_row(
-                        "", "", "", "[dim]—[/]", "[dim]—[/]", "[dim]—[/]", "[dim]—[/]", "",
+                        "",
+                        "",
+                        "",
+                        "[dim]—[/]",
+                        "[dim]—[/]",
+                        "[dim]—[/]",
+                        "[dim]—[/]",
+                        "",
                     )
                 else:
                     for pid, qty in sorted(account.positions.items()):
@@ -310,49 +337,54 @@ class PortfolioView:
                         mkt_val = price * qty
                         cost_basis = account.cost_basis.get(pid, 0.0)
                         table.add_row(
-                            "", "", "", pid, str(qty),
-                            f"${cost_basis:,.2f}", f"${mkt_val:,.2f}", "",
+                            "",
+                            "",
+                            "",
+                            pid,
+                            str(qty),
+                            f"${cost_basis:,.2f}",
+                            f"${mkt_val:,.2f}",
+                            "",
                         )
                 # Total value row with cash
                 table.add_row(
-                    "", "", f"[green]${account.cash:,.2f}[/]",
-                    "", "", "", "[bold]Total[/]",
+                    "",
+                    "",
+                    f"[green]${account.cash:,.2f}[/]",
+                    "",
+                    "",
+                    "",
+                    "[bold]Total[/]",
                     f"[bold]${total_value:,.2f}[/]",
                 )
 
         return Panel(table, title="[bold]Agent Portfolios[/]", border_style="green")
 
     def _build_trade_log(self) -> Panel:
+        table = Table(expand=True, show_lines=False, show_header=True, box=None)
+        table.add_column("Time", style="dim", ratio=1)
+        table.add_column("Action", ratio=1)
+        table.add_column("Qty", justify="right", ratio=1)
+        table.add_column("Product", ratio=2)
+        table.add_column("Price", justify="right", ratio=2)
+        table.add_column("Agent", style="dim", ratio=2)
+
         log = self._store.trade_log
         if not log:
-            content = Text("No trades yet...", style="dim italic")
+            table.add_row("[dim italic]No trades yet...[/]", "", "", "", "", "")
         else:
-            from rich.console import Group
-
-            rows = []
-            for ts, agent_id, action, product_id, qty, price in log:
+            for ts, agent_id, action, product_id, qty, price in reversed(log):
                 action_style = "bold green" if action == "buy" else "bold red"
-                rows.append(
-                    Text.from_markup(
-                        f"[dim]{ts}[/]  [{action_style}]{action.upper():>4}[/]  "
-                        f"{qty:>6} {product_id:<12} @ ${price:>12,.2f}  "
-                        f"[dim]{agent_id}[/]"
-                    )
+                table.add_row(
+                    ts,
+                    f"[{action_style}]{action.upper()}[/]",
+                    str(qty),
+                    product_id,
+                    f"${price:,.2f}",
+                    agent_id,
                 )
-            content = Group(*rows)
 
-        return Panel(content, title="[bold]Trade Log[/]", border_style="yellow")
-
-    def _build_footer(self) -> Panel:
-        accounts = self._store.accounts
-        total_trades = len(self._store.trade_log)
-        text = (
-            f"  [bold green]● LIVE[/]  [dim]|  "
-            f"{len(accounts)} agent(s)  |  "
-            f"{total_trades} trade(s)  |  "
-            f"Ctrl+C to exit[/]"
-        )
-        return Panel(Text.from_markup(text), style="dim", height=3)
+        return Panel(table, title="[bold]Trade Log[/]", border_style="yellow")
 
 
 # ── Module-level singletons ──────────────────────────────────────
@@ -371,6 +403,22 @@ def _execute_trade(agent_id: str, product_id: str, quantity: int, action: str) -
     return result.message
 
 
+def _format_hold_time(entry_ts: float | None) -> str:
+    """Format elapsed time since entry as a human-readable string."""
+    if entry_ts is None:
+        return "N/A"
+    seconds = datetime.now().timestamp() - entry_ts
+    if seconds < 60:
+        return f"{int(seconds)}s"
+    minutes = seconds / 60
+    if minutes < 60:
+        return f"{int(minutes)}m"
+    hours = minutes / 60
+    if hours < 24:
+        return f"{hours:.1f}h"
+    return f"{hours / 24:.1f}d"
+
+
 def _get_portfolio(agent_id: str) -> str:
     account = store.get_or_create(agent_id)
     pb = store.price_book
@@ -380,11 +428,16 @@ def _get_portfolio(agent_id: str) -> str:
     if not account.positions:
         lines.append("Positions: none")
     else:
-        lines.append("Positions:")
+        lines.append(
+            "| Ticker | Qty | Avg Cost | Total Cost "
+            "| Current Price | Mkt Value | P&L | Avg Time Held |"
+        )
+        lines.append("| --- | --- | --- | --- | --- | --- | --- | --- |")
         for pid in sorted(account.positions):
             qty = account.positions[pid]
             avg_cost = account.avg_cost_per_unit(pid)
             total_cost = account.cost_basis.get(pid, 0.0)
+            hold_str = _format_hold_time(account.avg_entry_ts.get(pid))
 
             entry = pb.get(pid)
             if entry is not None:
@@ -393,20 +446,18 @@ def _get_portfolio(agent_id: str) -> str:
                 pnl = mkt_value - total_cost
                 pnl_sign = "+" if pnl >= 0 else ""
                 lines.append(
-                    f"  {pid}: {qty} units | "
-                    f"cost basis ${avg_cost:,.4f}/unit (${total_cost:,.2f} total) | "
-                    f"current ${current_price:,.4f}/unit (${mkt_value:,.2f} mkt value) | "
-                    f"P&L {pnl_sign}${pnl:,.2f}"
+                    f"| {pid} | {qty} | ${avg_cost:,.2f} | ${total_cost:,.2f} "
+                    f"| ${current_price:,.2f} | ${mkt_value:,.2f} "
+                    f"| {pnl_sign}${pnl:,.2f} | {hold_str} |"
                 )
             else:
                 lines.append(
-                    f"  {pid}: {qty} units | "
-                    f"cost basis ${avg_cost:,.4f}/unit (${total_cost:,.2f} total) | "
-                    f"current price unavailable"
+                    f"| {pid} | {qty} | ${avg_cost:,.2f} | ${total_cost:,.2f} "
+                    f"| N/A | N/A | N/A | {hold_str} |"
                 )
 
     portfolio_val = account.portfolio_value(pb)
-    lines.append(f"Total portfolio value: ${portfolio_val:,.2f}")
+    lines.append(f"\nTotal portfolio value: ${portfolio_val:,.2f}")
 
     return "\n".join(lines)
 
@@ -416,28 +467,52 @@ def _get_portfolio(agent_id: str) -> str:
 
 @agent_tool
 def execute_trade(ctx: ToolContext, product_id: str, quantity: int, action: str) -> str:
-    """Execute a buy or sell trade for a crypto product.
+    """Execute a buy or sell trade. Buys execute at the best ask price, sells at the best bid.
 
     Args:
-        product_id: The trading pair to trade (e.g., BTC-USD, ETH-USD, SOL-USD)
-        quantity: The number of units to buy or sell (must be a positive integer)
-        action: Either 'buy' or 'sell'
+        product_id: Trading pair (e.g., BTC-USD, FARTCOIN-USD, SOL-USD)
+        quantity: Number of units to trade (positive integer)
+        action: 'buy' or 'sell'
 
     Returns:
-        A message describing the trade result including updated cash balance
+        Trade confirmation with execution price and remaining cash, or an error message
     """
     return _execute_trade(ctx.agent_name, product_id, quantity, action)
 
 
 @agent_tool
 def get_portfolio(ctx: ToolContext) -> str:
-    """Get the current portfolio summary including cash, positions, and cost basis.
+    """View your portfolio: available cash, open positions, and total value.
 
     Returns:
-        A detailed breakdown of cash held, each product owned with quantity,
-        current market price, cost basis per unit, and total portfolio value
+        A table of positions with quantity, average cost basis, current market
+        price, unrealized P&L, and average time held — plus cash and total value
     """
     return _get_portfolio(ctx.agent_name)
+
+
+@agent_tool
+def calculator(ctx: ToolContext, expression: str) -> str:
+    """Evaluate a math expression. Use for financial calculations you can't do in your head,
+    such as position sizing, P&L, percentage changes, or risk/reward ratios.
+
+    Respects standard order of operations (PEMDAS).
+    Supported operators: +, -, *, /, ** (power), % (modulo), parentheses for grouping.
+    Functions: abs(), sqrt(), log(), floor(), ceil(), min(), max().
+
+    Args:
+        expression: A math expression (e.g., '100000 * 0.02', '64200 / 3',
+            '(50000 - 32100) / 32100 * 100', 'max(10, 20)')
+
+    Returns:
+        The numeric result
+    """
+
+    try:
+        result = sympy.sympify(expression)
+        return str(result.evalf() if not result.is_number else result)
+    except (sympy.SympifyError, TypeError) as e:
+        return f"Invalid expression: {e}"
 
 
 # ── Coinbase price feed ──────────────────────────────────────────
@@ -501,7 +576,7 @@ async def main() -> None:
     broker = BrokerClient(bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS)
 
     service = NodesService(broker)
-    all_tools = [execute_trade, get_portfolio]
+    all_tools = [execute_trade, get_portfolio, calculator]
     for tool in all_tools:
         service.register_node(tool)
         print(f"  - {tool.subscribed_topic} registered")

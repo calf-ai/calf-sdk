@@ -6,7 +6,7 @@ from calfkit.nodes.agent_router_node import AgentRouterNode
 from calfkit.nodes.chat_node import ChatNode
 from calfkit.runners.service import NodesService
 from calfkit.stores.in_memory import InMemoryMessageHistoryStore
-from examples.auto_trading_bots.trading_tools import execute_trade, get_portfolio
+from examples.daytrading_agents_arena.trading_tools import calculator, execute_trade, get_portfolio
 
 # Router Nodes — Deploys 3 agent router workers.
 #
@@ -14,7 +14,7 @@ from examples.auto_trading_bots.trading_tools import execute_trade, get_portfoli
 # All 3 workers subscribe to the same topic with separate group IDs.
 #
 # Usage:
-#     uv run python examples/auto_trading_bots/router_nodes.py
+#     uv run python examples/daytrading_agents_arena/router_nodes.py
 #
 # Prerequisites:
 #     - Kafka broker running at localhost:9092
@@ -79,17 +79,17 @@ KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 AGENTS = [
     {
         "name": "momentum",
-        "tools": [execute_trade, get_portfolio],
+        "tools": [execute_trade, get_portfolio, calculator],
         "system_prompt": SYSTEM_PROMPT_MOMENTUM,
     },
     {
         "name": "brainrot-daytrader",
-        "tools": [execute_trade, get_portfolio],
+        "tools": [execute_trade, get_portfolio, calculator],
         "system_prompt": SYSTEM_PROMPT_BRAINROT,
     },
     {
         "name": "scalper",
-        "tools": [execute_trade, get_portfolio],
+        "tools": [execute_trade, get_portfolio, calculator],
         "system_prompt": SYSTEM_PROMPT_SCALPER,
     },
 ]

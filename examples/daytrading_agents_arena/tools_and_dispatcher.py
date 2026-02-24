@@ -6,7 +6,7 @@ from rich.live import Live
 
 from calfkit.broker.broker import BrokerClient
 from calfkit.runners.service import NodesService
-from examples.auto_trading_bots.trading_tools import (
+from examples.daytrading_agents_arena.trading_tools import (
     execute_trade,
     get_portfolio,
     run_price_feed,
@@ -21,7 +21,7 @@ from examples.auto_trading_bots.trading_tools import (
 # tools read from when executing trades.
 #
 # Usage:
-#     uv run python examples/auto_trading_bots/tools_and_dispatcher.py
+#     uv run python examples/daytrading_agents_arena/tools_and_dispatcher.py
 #
 # Prerequisites:
 #     - Kafka broker running at localhost:9092

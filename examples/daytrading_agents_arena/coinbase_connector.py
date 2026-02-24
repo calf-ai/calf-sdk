@@ -4,7 +4,8 @@ import os
 
 from calfkit.broker.broker import BrokerClient
 from calfkit.nodes.agent_router_node import AgentRouterNode
-from examples.auto_trading_bots.coinbase_kafka_connector import (
+from examples.daytrading_agents_arena.coinbase_consumer import CandleBook
+from examples.daytrading_agents_arena.coinbase_kafka_connector import (
     DEFAULT_PRODUCTS,
     CoinbaseKafkaConnector,
 )
@@ -14,7 +15,7 @@ from examples.auto_trading_bots.coinbase_kafka_connector import (
 # RouterServiceClient on each price tick.
 #
 # Usage:
-#     uv run python examples/auto_trading_bots/coinbase_connector.py
+#     uv run python examples/daytrading_agents_arena/coinbase_connector.py
 #
 # Prerequisites:
 #     - Kafka broker running (set KAFKA_BOOTSTRAP_SERVERS env var, default: localhost:9092)
@@ -31,7 +32,7 @@ SYSTEM_PROMPT = (
 )
 
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
-MIN_PUBLISH_INTERVAL = 15.0
+MIN_PUBLISH_INTERVAL = 20.0
 
 
 async def main():
@@ -56,11 +57,14 @@ async def main():
     print(f"  Products: {', '.join(DEFAULT_PRODUCTS)}")
     print(f"  Min publish interval: {MIN_PUBLISH_INTERVAL}s")
 
+    candle_book = CandleBook()
+
     connector = CoinbaseKafkaConnector(
         broker=broker,
         router_node=router_node,
         products=DEFAULT_PRODUCTS,
         min_publish_interval=MIN_PUBLISH_INTERVAL,
+        candle_book=candle_book,
     )
 
     print("\nStarting Coinbase connector...")

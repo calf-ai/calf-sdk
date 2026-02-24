@@ -32,6 +32,7 @@ from pydantic import BaseModel
 
 from calfkit.broker.broker import BrokerClient
 from calfkit.nodes.agent_router_node import AgentRouterNode
+from examples.daytrading_agents_arena.coinbase_consumer import CandleBook, poll_rest
 
 logger = logging.getLogger(__name__)
 
@@ -39,11 +40,8 @@ COINBASE_WS_URL = "wss://ws-feed.exchange.coinbase.com"
 
 DEFAULT_PRODUCTS = [
     "BTC-USD",
-    "ETH-USD",
-    "SOL-USD",
-    "XRP-USD",
-    "DOGE-USD",
     "FARTCOIN-USD",
+    "SOL-USD",
 ]
 
 RECONNECT_DELAY_SECONDS = 3
@@ -89,12 +87,14 @@ class CoinbaseKafkaConnector:
         router_node: AgentRouterNode,
         products: list[str],
         min_publish_interval: float = 0.0,
+        candle_book: CandleBook | None = None,
     ) -> None:
         self._broker = broker
         self._router_node = router_node
         self._products = products
         self._min_interval = min_publish_interval
         self._running = True
+        self._candle_book = candle_book
 
         # Latest ticker per product — patched on every incoming message
         self._latest: dict[str, TickerMessage] = {}
@@ -138,13 +138,39 @@ class CoinbaseKafkaConnector:
             return
 
         batch = list(self._latest.values())
-        batch_json = json.dumps([t.model_dump() for t in batch])
+        _exclude = {
+            "best_bid_size",
+            "best_ask_size",
+            "last_size",
+            "side",
+            "trade_id",
+            "sequence",
+            "open_24h",
+            "high_24h",
+            "low_24h",
+            "volume_30d",
+            "time",
+        }
+        batch_json = json.dumps([t.model_dump(exclude=_exclude) for t in batch])
+
+        prompt_parts = [
+            "Here is the latest ticker information. You should view your "
+            "portfolio first before making any decisions to trade.\n"
+            "price = last traded price, best_bid = price you sell at, "
+            "best_ask = price you buy at.\n\n"
+            f"{batch_json}",
+        ]
+
+        if self._candle_book is not None and self._candle_book.has_data():
+            prompt_parts.append(
+                "\n## Price History (OHLCV candlesticks)\n"
+                "Below are candlesticks at three granularities — coarser for "
+                "broader trend context, finer for recent price action.\n\n"
+                f"{self._candle_book.format_prompt(self._products)}"
+            )
+
         await self._router_node.invoke(
-            user_prompt=(
-                "Here is the latest ticker information. You should view your "
-                "portfolio first before making any decisions to trade.\n\n"
-                f"{batch_json}"
-            ),
+            user_prompt="\n".join(prompt_parts),
             broker=self._broker,
             correlation_id=uuid_utils.uuid7().hex,
         )
@@ -184,6 +210,22 @@ class CoinbaseKafkaConnector:
             )
 
             flush_task = asyncio.create_task(self._periodic_publish())
+
+            candle_task: asyncio.Task | None = None
+            if self._candle_book is not None:
+                from examples.daytrading_agents_arena.coinbase_consumer import PriceBook
+
+                # CandleBook updates are independent; PriceBook updates come
+                # from the WebSocket, so pass a throwaway PriceBook here.
+                candle_task = asyncio.create_task(
+                    poll_rest(
+                        products=self._products,
+                        price_book=PriceBook(),
+                        candle_book=self._candle_book,
+                        interval=60.0,
+                    )
+                )
+
             try:
                 async for raw in ws:
                     if not self._running:
@@ -201,6 +243,12 @@ class CoinbaseKafkaConnector:
                     await flush_task
                 except asyncio.CancelledError:
                     pass
+                if candle_task is not None:
+                    candle_task.cancel()
+                    try:
+                        await candle_task
+                    except asyncio.CancelledError:
+                        pass
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

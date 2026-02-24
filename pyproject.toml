@@ -80,5 +80,6 @@ dev = [
     "ruff>=0.14.11",
 ]
 examples = [
+    "sympy>=1.13",
     "websockets>=16.0",
 ]
