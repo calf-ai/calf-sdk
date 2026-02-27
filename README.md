@@ -28,14 +28,18 @@ Building agents like traditional web applications—tight coupling and synchrono
 - **Siloed:** Agent communication models are difficult to wire into existing upstream and downstream systems
 - **Non-streaming:** Agents do not naturally follow a livestreaming pattern, making data stream consumption difficult to manage
 
-### What Calfkit gives you
+### What Calfkit provides
 
 Calfkit is a Python SDK that builds event-stream agents out-the-box. You get the benefits of an asynchronous, distributed system without managing the infrastructure yourself.
 
 - **Distributed to the core:** Agents aren't monoliths that just sit on top of the transportation layer. Agents are decomposed into independent services — the agent itself is a deeply distributed system.
+
 - **Independent scaling:** Each service can scale on its own based on demand.
+
 - **Livestream agents by default:** Agents already listen on event streams, so consuming data streams — realtime market feeds, IoT sensors, user activity event streams — is the native pattern, not a bolted-on integration.
+
 - **Compose agents without coupling:** Compose multi-agent teams and workflows by deploying agents on communication channels that are already tapped into the messaging stream. No extra wiring, and no editing existing code — agents don't even need to know about each other.
+
 - **Universal data flow:** Agents plug into any stream — integrate and consume from any upstream data sources and publish to downstream systems like CRMs, warehouses, or even other agents.
 
 <br>
@@ -45,22 +49,24 @@ Calfkit is a Python SDK that builds event-stream agents out-the-box. You get the
 ### Prerequisites
 
 - Python 3.10 or later
-- Docker installed and running (for local testing with a Calfkit broker)
-- OpenAI API key (or another OpenAI API compliant LLM provider)
+- Docker installed and running (for testing with a local Calfkit broker)
+- LLM Provider API key
 
-### Install
+<br>
+
+### 1. Install
 
 ```bash
 pip install calfkit
 ```
 
-### ☁️ Calfkit Cloud (Coming Soon)
+<br>
 
-Skip the infrastructure. Calfkit Cloud is a fully-managed Kafka service built for Calfkit AI agents and multi-agent teams. No server infrastructure to self-host or maintain, with built-in observability and agent-event tracing.
+### 2. Start a Calfkit Broker
 
-Coming soon. [Fill out the interest form →](https://forms.gle/Rk61GmHyJzequEPm8)
-
-### Start Local Calfkit Server (Requires Docker)
+<details>
+<summary><b>Option A: Local Broker (Requires Docker)</b></summary>
+<br>
 
 Calfkit uses Kafka as the event broker. Run the following command to clone the [calfkit-broker](https://github.com/calf-ai/calfkit-broker) repo and start a local Kafka broker container:
 
@@ -70,7 +76,21 @@ git clone https://github.com/calf-ai/calfkit-broker && cd calfkit-broker && make
 
 Once the broker is ready, open a new terminal tab to continue with the quickstart.
 
-### Define and Deploy the Tool Node
+</details>
+
+<details>
+<summary><b>Option B: ☁️ Calfkit Cloud (Coming Soon)</b></summary>
+<br>
+
+Skip the infrastructure. Calfkit Cloud is a fully-managed Kafka service built for Calfkit AI agents and multi-agent teams. No server infrastructure to self-host or maintain, with built-in observability and agent-event tracing.
+
+Coming soon. [Fill out the interest form →](https://forms.gle/Rk61GmHyJzequEPm8)
+
+</details>
+
+<br>
+
+### 3. Define and Deploy the Tool Node
 
 Define and deploy a tool as an independent service. Tools are not owned by or coupled to any specific agent—once deployed, any agent in your system can discover and invoke the tool. Deploy once, use everywhere.
 
@@ -103,9 +123,12 @@ Run the file to deploy the tool service:
 python weather_tool.py
 ```
 
-### Deploy the Chat Node
+<br>
+
+### 4. Deploy the Chat Node
 
 Deploy the LLM chat node as its own service.
+
 ```python
 # chat_service.py
 import asyncio
@@ -138,7 +161,9 @@ Run the file to deploy the chat service:
 python chat_service.py
 ```
 
-### Deploy the Agent Router Node
+<br>
+
+### 5. Deploy the Agent Router Node
 
 Deploy the agent router that orchestrates chat, tools, and conversation-level memory.
 
@@ -173,7 +198,9 @@ Run the file to deploy the agent router service:
 python agent_router_service.py
 ```
 
-### Invoke the Agent
+<br>
+
+### 6. Invoke the Agent
 
 Send a request and receive the response.
 
@@ -218,7 +245,9 @@ async for message in response.messages_stream():
     print(message)
 ```
 
-### Runtime Configuration (Optional)
+<br>
+
+### Runtime Injected System Prompts and Tools (Optional)
 
 Clients can override the system prompt and restrict available tools at invocation time without redeploying:
 
