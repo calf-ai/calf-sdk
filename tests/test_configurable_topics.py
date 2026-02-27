@@ -241,9 +241,7 @@ async def test_integration_custom_topics_with_test_broker():
     response_store: dict[str, asyncio.Queue[EventEnvelope]] = {}
 
     @broker.subscriber(custom_output)
-    def collect_response(
-        event_envelope: EventEnvelope, correlation_id: Annotated[str, Context()]
-    ):
+    def collect_response(event_envelope: EventEnvelope, correlation_id: Annotated[str, Context()]):
         if correlation_id not in response_store:
             response_store[correlation_id] = asyncio.Queue()
         response_store[correlation_id].put_nowait(event_envelope)

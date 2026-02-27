@@ -1,7 +1,7 @@
 from abc import ABC
 from collections.abc import Callable
 from functools import cached_property
-from typing import Any, TypedDict
+from typing import Any, TypedDict, cast
 
 from pydantic import BaseModel
 
@@ -144,7 +144,7 @@ class BaseNode(ABC):
             ):
                 # Copy to avoid mutating class-level _handler_registry dicts
                 # (bound_registry shares references for unnamed nodes)
-                updated: TopicsDict = {**topics}
+                updated = cast(TopicsDict, {**topics})
                 if input_topics is not None and "shared_subscribe_topic" in updated:
                     old_shared = updated["shared_subscribe_topic"]
                     updated["shared_subscribe_topic"] = input_topics[0]
@@ -157,9 +157,9 @@ class BaseNode(ABC):
                 self.bound_registry[handler] = updated
 
         if input_topics is not None:
-            self.__dict__["subscribed_topic"] = input_topics[0]
+            self.subscribed_topic = input_topics[0]
         if output_topic is not None:
-            self.__dict__["publish_to_topic"] = output_topic
+            self.publish_to_topic = output_topic
 
     @cached_property
     def subscribed_topic(self) -> str | None:
