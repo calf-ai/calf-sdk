@@ -40,7 +40,7 @@ def returnpoint(topic_template: str) -> Callable[[Any], Any]:
     """Declare a returnpoint topic — the topic where this node receives delegated responses.
 
     The template uses Python str.format() syntax with `{name}` as the placeholder,
-    e.g. ``@returnpoint("tool_node.handoff.response.{name}")``.
+    e.g. ``@returnpoint("tool_node.delegation.response.{name}")``.
     """
 
     def decorator(fn: Any) -> Any:

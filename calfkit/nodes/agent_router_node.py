@@ -112,7 +112,7 @@ class AgentRouterNode(BaseNode):
             input_topic: Override the default input topic(s). Accepts a single topic string
                 or a list of topics for fan-in from multiple upstream sources.
             output_topic: Override the default output topic.
-            tool_nodes: List of tool nodes that the agent can call. Includes any HandoffTool
+            tool_nodes: List of tool nodes that the agent can call. Includes any DelegationTool
                 instances — the router treats them like any other tool. Optional for all forms.
             message_history_store: Store for persisting conversation history across requests.
                 Required for deployable service, optional otherwise.

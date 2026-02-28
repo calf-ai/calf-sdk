@@ -1,10 +1,10 @@
 from calfkit.models.types import CompactBaseModel
 
 
-class HandoffFrame(CompactBaseModel):
-    """A single frame on the handoff stack, representing one delegation hop.
+class DelegationFrame(CompactBaseModel):
+    """A single frame on the delegation stack, representing one delegation hop.
 
-    Pushed onto EventEnvelope.handoff_stack when a HandoffTool delegates
+    Pushed onto EventEnvelope.delegation_stack when a DelegationTool delegates
     to a sub-agent, and popped when the sub-agent's response returns.
     """
 

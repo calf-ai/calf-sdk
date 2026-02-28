@@ -7,50 +7,51 @@ from faststream.kafka.annotations import (
 
 from calfkit._vendor.pydantic_ai import ModelRequest, ModelResponse, ToolReturnPart
 from calfkit._vendor.pydantic_ai.tools import Tool, ToolDefinition
+from calfkit.models.delegation import DelegationFrame
 from calfkit.models.event_envelope import EventEnvelope
-from calfkit.models.handoff import HandoffFrame
 from calfkit.nodes.base_node import BaseNode, entrypoint, returnpoint
 from calfkit.nodes.base_tool_node import BaseToolNode
 
 
-class HandoffTool(BaseToolNode):
-    tool_name = "handoff_tool"
+class DelegationTool(BaseToolNode):
+    tool_name = "delegation_tool"
 
     def __init__(self, nodes: list[BaseNode], **kwargs: Any):
-        description = f"""Use this tool to handoff the task or conversation to another agent.
-The names of the agents that you can handoff to are as listed:
+        description = f"""Use this tool to delegate the task or conversation to another agent.
+The names of the agents that you can delegate to are as listed:
 {", ".join(node.name for node in nodes if node.name)}
 
 Args:
-    name (str): The name of the agent to handoff to.
-    message (str): The message to provide the handoff agent in order to provide context."""
+    name (str): The name of the agent to delegate to.
+    message (str): The message to provide the delegate agent in order to provide context."""
 
-        self._handoffs_topic_registry: dict[str, str] = {
-            handoff.name: handoff.entrypoint_topic
-            for handoff in nodes
-            if handoff.entrypoint_topic is not None and handoff.name is not None
+        self._delegations_topic_registry: dict[str, str] = {
+            node.name: node.entrypoint_topic
+            for node in nodes
+            if node.entrypoint_topic is not None and node.name is not None
         }
 
-        def handoff_tool(name: str, message: str) -> None:
-            """Use this tool to handoff the task or conversation to another agent.
+        def delegation_tool(name: str, message: str) -> None:
+            """Use this tool to delegate the task or conversation to another agent.
 
             Args:
-                name (str): The name of the agent to handoff to.
-                message (str): The message to provide the handoff agent in order to provide context.
+                name (str): The name of the agent to delegate to.
+                message (str): The message to provide the delegate agent
+                    in order to provide context.
             """
             return
 
         self.tool = Tool(
-            handoff_tool,
+            delegation_tool,
             name=self.tool_name,
             description=description,
         )
         node_names = sorted(n.name for n in nodes if n.name)
-        resolved_name = f"handoff_{'_'.join(node_names)}"
+        resolved_name = f"delegation_{'_'.join(node_names)}"
         super().__init__(name=resolved_name, **kwargs)
 
     # --- Phase 1: Delegation entry point ---
-    @entrypoint("tool_node.handoff.{name}")
+    @entrypoint("tool_node.delegation.{name}")
     async def on_enter(
         self,
         event_envelope: EventEnvelope,
@@ -67,13 +68,13 @@ Args:
         message = kw_args.get("message", "")
 
         # Validate target agent exists — error case returns normally via reply_to
-        target_topic = self._handoffs_topic_registry.get(target_name)
+        target_topic = self._delegations_topic_registry.get(target_name)
         if target_topic is None:
             tool_result = ToolReturnPart(
                 tool_name=tool_call_req.tool_name,
                 content=(
                     f"Error: agent '{target_name}' not found."
-                    f" Available agents: {', '.join(self._handoffs_topic_registry.keys())}"
+                    f" Available agents: {', '.join(self._delegations_topic_registry.keys())}"
                 ),
                 tool_call_id=tool_call_req.tool_call_id,
             )
@@ -85,7 +86,9 @@ Args:
         if not reply_to:
             tool_result = ToolReturnPart(
                 tool_name=tool_call_req.tool_name,
-                content="Error: handoff requires reply_to (caller must publish with reply_to set).",
+                content=(
+                    "Error: delegation requires reply_to (caller must publish with reply_to set)."
+                ),
                 tool_call_id=tool_call_req.tool_call_id,
             )
             event_envelope.tool_call_request = None
@@ -97,7 +100,7 @@ Args:
             tool_result = ToolReturnPart(
                 tool_name=tool_call_req.tool_name,
                 content=(
-                    "Error: handoff requires a thread_id"
+                    "Error: delegation requires a thread_id"
                     " (message history store must be configured)."
                 ),
                 tool_call_id=tool_call_req.tool_call_id,
@@ -108,8 +111,8 @@ Args:
 
         # --- Success path: delegate to sub-agent ---
 
-        # Build the handoff frame capturing the caller's return address
-        frame = HandoffFrame(
+        # Build the delegation frame capturing the caller's return address
+        frame = DelegationFrame(
             caller_private_topic=reply_to,
             caller_final_response_topic=event_envelope.final_response_topic,
             tool_call_id=tool_call_req.tool_call_id,
@@ -118,7 +121,7 @@ Args:
 
         # Create delegation envelope (deep copy, clean slate for sub-agent)
         delegation = event_envelope.model_copy(deep=True)
-        delegation.push_handoff_frame(frame)
+        delegation.push_delegation_frame(frame)
         delegation.message_history = []
         delegation.final_response_topic = self.returnpoint_topic
         delegation.pending_tool_calls = []
@@ -146,14 +149,14 @@ Args:
         return EventEnvelope()
 
     # --- Phase 2: Delegation response ---
-    @returnpoint("tool_node.handoff.response.{name}")
+    @returnpoint("tool_node.delegation.response.{name}")
     async def on_delegation_response(
         self,
         event_envelope: EventEnvelope,
         correlation_id: Annotated[str, Context()],
         broker: BrokerAnnotation,
     ) -> None:
-        frame = event_envelope.pop_handoff_frame()
+        frame = event_envelope.pop_delegation_frame()
 
         # Extract the sub-agent's final response text
         last_msg = event_envelope.latest_message_in_history
@@ -173,7 +176,7 @@ Args:
             trace_id=event_envelope.trace_id,
             thread_id=event_envelope.thread_id,
             final_response_topic=frame.caller_final_response_topic,
-            handoff_stack=event_envelope.handoff_stack,
+            delegation_stack=event_envelope.delegation_stack,
         )
         response.prepare_uncommitted_agent_messages([ModelRequest(parts=[tool_result])])
 

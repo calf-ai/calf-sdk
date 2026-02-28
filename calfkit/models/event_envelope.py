@@ -4,8 +4,8 @@ from pydantic import Field
 
 from calfkit._vendor.pydantic_ai import ModelMessage, ModelRequest
 from calfkit._vendor.pydantic_ai.models import ModelRequestParameters
+from calfkit.models.delegation import DelegationFrame
 from calfkit.models.groupchat import GroupchatDataModel
-from calfkit.models.handoff import HandoffFrame
 from calfkit.models.types import CompactBaseModel, SerializableModelSettings, ToolCallRequest
 
 
@@ -61,10 +61,10 @@ class EventEnvelope(CompactBaseModel):
     # For holding groupchat data and config. Only to directly be accessed by the groupchat node.
     groupchat_data: GroupchatDataModel | None = None
 
-    # Stack of HandoffFrames tracking nested agent-to-agent delegations.
+    # Stack of DelegationFrames tracking nested agent-to-agent delegations.
     # Each frame records the return address and tool-call metadata so that
     # the response can be routed back to the correct caller.
-    handoff_stack: list[HandoffFrame] = Field(default_factory=list)
+    delegation_stack: list[DelegationFrame] = Field(default_factory=list)
 
     @property
     def is_groupchat(self) -> bool:
@@ -117,25 +117,25 @@ class EventEnvelope(CompactBaseModel):
             else []
         )
 
-    def push_handoff_frame(self, frame: HandoffFrame) -> None:
-        """Push a handoff frame onto the stack.
+    def push_delegation_frame(self, frame: DelegationFrame) -> None:
+        """Push a delegation frame onto the stack.
 
         Uses assignment (not in-place mutation) so that Pydantic's
         ``exclude_unset`` serialization includes the field after modification.
         """
-        self.handoff_stack = [*self.handoff_stack, frame]
+        self.delegation_stack = [*self.delegation_stack, frame]
 
-    def pop_handoff_frame(self) -> HandoffFrame:
-        """Pop the top handoff frame from the stack.
+    def pop_delegation_frame(self) -> DelegationFrame:
+        """Pop the top delegation frame from the stack.
 
         Uses assignment (not in-place mutation) so that Pydantic's
         ``exclude_unset`` serialization includes the field after modification.
 
         Raises:
-            IndexError: If the handoff stack is empty.
+            IndexError: If the delegation stack is empty.
         """
-        if not self.handoff_stack:
-            raise IndexError("Cannot pop from an empty handoff stack")
-        *rest, frame = self.handoff_stack
-        self.handoff_stack = rest
+        if not self.delegation_stack:
+            raise IndexError("Cannot pop from an empty delegation stack")
+        *rest, frame = self.delegation_stack
+        self.delegation_stack = rest
         return frame
