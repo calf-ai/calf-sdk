@@ -455,7 +455,7 @@ def test_deps_round_trip_on_envelope():
 
 def test_named_chat_node_input_topic():
     """Named ChatNode should subscribe to a private input topic derived from name."""
-    chat = ChatNode(name="gpt4o")
+    chat = ChatNode(name="gpt-5-nano")
     assert chat.subscribed_topic == "ai_prompted.gpt4o"
     assert chat.publish_to_topic == "ai_generated.gpt4o"
     assert chat.entrypoint_topic is None
@@ -463,7 +463,7 @@ def test_named_chat_node_input_topic():
 
 def test_named_chat_node_removes_shared_subscribe_topic():
     """A named ChatNode should NOT subscribe to the shared 'ai_prompted' topic."""
-    chat = ChatNode(name="gpt4o")
+    chat = ChatNode(name="gpt-5-nano")
     for topics in chat.bound_registry.values():
         subscribe_topics = topics.get("subscribe_topics", [])
         assert "ai_prompted" not in subscribe_topics, (
