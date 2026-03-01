@@ -9,33 +9,29 @@ from typing import Any, Literal, overload
 
 from pydantic import ConfigDict, with_config
 from pydantic.errors import PydanticUserError
-from pydantic_ai import (
+from pydantic_core import PydanticSerializationError
+from temporalio import activity, workflow
+from temporalio.common import RetryPolicy
+from temporalio.workflow import ActivityConfig
+from typing_extensions import Never
+
+from ... import (
     AbstractToolset,
     AgentRunResultEvent,
     _utils,
-    models,
-)
-from pydantic_ai import (
     messages as _messages,
-)
-from pydantic_ai import (
+    models,
     usage as _usage,
 )
-from pydantic_ai.agent import (
-    AbstractAgent,
-    AgentRun,
-    AgentRunResult,
-    EventStreamHandler,
-    WrapperAgent,
-)
-from pydantic_ai.agent.abstract import AgentMetadata, Instructions, RunOutputDataT
-from pydantic_ai.builtin_tools import AbstractBuiltinTool
-from pydantic_ai.exceptions import UserError
-from pydantic_ai.models import Model
-from pydantic_ai.output import OutputDataT, OutputSpec
-from pydantic_ai.result import StreamedRunResult
-from pydantic_ai.settings import ModelSettings
-from pydantic_ai.tools import (
+from ...agent import AbstractAgent, AgentRun, AgentRunResult, EventStreamHandler, WrapperAgent
+from ...agent.abstract import AgentMetadata, Instructions, RunOutputDataT
+from ...builtin_tools import AbstractBuiltinTool
+from ...exceptions import UserError
+from ...models import Model
+from ...output import OutputDataT, OutputSpec
+from ...result import StreamedRunResult
+from ...settings import ModelSettings
+from ...tools import (
     AgentDepsT,
     BuiltinToolFunc,
     DeferredToolResults,
@@ -43,11 +39,6 @@ from pydantic_ai.tools import (
     Tool,
     ToolFuncEither,
 )
-from pydantic_core import PydanticSerializationError
-from temporalio import activity, workflow
-from temporalio.common import RetryPolicy
-from temporalio.workflow import ActivityConfig
-from typing_extensions import Never
 
 from ._model import TemporalModel, TemporalProviderFactory
 from ._run_context import TemporalRunContext
@@ -361,7 +352,7 @@ class TemporalAgent(WrapperAgent[AgentDepsT, OutputDataT]):
 
         Example:
         ```python
-        from pydantic_ai import Agent
+        from ... import Agent
 
         agent = Agent('openai:gpt-4o')
 
@@ -492,7 +483,7 @@ class TemporalAgent(WrapperAgent[AgentDepsT, OutputDataT]):
 
         Example:
         ```python
-        from pydantic_ai import Agent
+        from ... import Agent
 
         agent = Agent('openai:gpt-4o')
 
@@ -614,7 +605,7 @@ class TemporalAgent(WrapperAgent[AgentDepsT, OutputDataT]):
 
         Example:
         ```python
-        from pydantic_ai import Agent
+        from ... import Agent
 
         agent = Agent('openai:gpt-4o')
 
@@ -737,7 +728,7 @@ class TemporalAgent(WrapperAgent[AgentDepsT, OutputDataT]):
 
         Example:
         ```python
-        from pydantic_ai import Agent, AgentRunResultEvent, AgentStreamEvent
+        from ... import Agent, AgentRunResultEvent, AgentStreamEvent
 
         agent = Agent('openai:gpt-4o')
 
@@ -885,7 +876,7 @@ class TemporalAgent(WrapperAgent[AgentDepsT, OutputDataT]):
 
         Example:
         ```python
-        from pydantic_ai import Agent
+        from ... import Agent
 
         agent = Agent('openai:gpt-4o')
 

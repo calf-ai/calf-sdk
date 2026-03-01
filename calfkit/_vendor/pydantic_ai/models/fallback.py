@@ -9,8 +9,9 @@ from typing import TYPE_CHECKING, Any
 from opentelemetry.trace import get_current_span
 
 from .._run_context import RunContext
-from ..exceptions import FallbackExceptionGroup, ModelAPIError
 from ..models.instrumented import InstrumentedModel
+
+from ..exceptions import FallbackExceptionGroup, ModelAPIError
 from ..profiles import ModelProfile
 from . import KnownModelName, Model, ModelRequestParameters, StreamedResponse, infer_model
 

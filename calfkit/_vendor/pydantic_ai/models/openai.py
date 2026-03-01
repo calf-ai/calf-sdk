@@ -19,9 +19,7 @@ from .. import ModelAPIError, ModelHTTPError, UnexpectedModelBehavior, _utils, u
 from .._output import DEFAULT_OUTPUT_TOOL_NAME, OutputObjectDefinition
 from .._run_context import RunContext
 from .._thinking_part import split_content_into_text_and_thinking
-from .._utils import guard_tool_call_id as _guard_tool_call_id
-from .._utils import now_utc as _now_utc
-from .._utils import number_to_datetime
+from .._utils import guard_tool_call_id as _guard_tool_call_id, now_utc as _now_utc, number_to_datetime
 from ..builtin_tools import (
     AbstractBuiltinTool,
     CodeExecutionTool,
@@ -75,15 +73,7 @@ from . import (
 )
 
 try:
-    from openai import (
-        NOT_GIVEN,
-        APIConnectionError,
-        APIStatusError,
-        AsyncOpenAI,
-        AsyncStream,
-        Omit,
-        omit,
-    )
+    from openai import NOT_GIVEN, APIConnectionError, APIStatusError, AsyncOpenAI, AsyncStream, Omit, omit
     from openai.types import AllModels, chat, responses
     from openai.types.chat import (
         ChatCompletionChunk,
@@ -98,18 +88,12 @@ try:
     from openai.types.chat.chat_completion_content_part_image_param import ImageURL
     from openai.types.chat.chat_completion_content_part_input_audio_param import InputAudio
     from openai.types.chat.chat_completion_content_part_param import File, FileFile
-    from openai.types.chat.chat_completion_message_custom_tool_call import (
-        ChatCompletionMessageCustomToolCall,
-    )
-    from openai.types.chat.chat_completion_message_function_tool_call import (
-        ChatCompletionMessageFunctionToolCall,
-    )
+    from openai.types.chat.chat_completion_message_custom_tool_call import ChatCompletionMessageCustomToolCall
+    from openai.types.chat.chat_completion_message_function_tool_call import ChatCompletionMessageFunctionToolCall
     from openai.types.chat.chat_completion_message_function_tool_call_param import (
         ChatCompletionMessageFunctionToolCallParam,
     )
-    from openai.types.chat.chat_completion_prediction_content_param import (
-        ChatCompletionPredictionContentParam,
-    )
+    from openai.types.chat.chat_completion_prediction_content_param import ChatCompletionPredictionContentParam
     from openai.types.chat.completion_create_params import (
         WebSearchOptions,
         WebSearchOptionsUserLocation,
@@ -119,8 +103,6 @@ try:
     from openai.types.responses.response_input_param import FunctionCallOutput, Message
     from openai.types.responses.response_reasoning_item_param import (
         Content as ReasoningContent,
-    )
-    from openai.types.responses.response_reasoning_item_param import (
         Summary as ReasoningSummary,
     )
     from openai.types.responses.response_status import ResponseStatus
@@ -873,10 +855,10 @@ class OpenAIChatModel(Model):
 
         _model: OpenAIChatModel
 
+        name: str | None = None
         texts: list[str] = field(default_factory=list)
         thinkings: list[str] = field(default_factory=list)
         tool_calls: list[ChatCompletionMessageFunctionToolCallParam] = field(default_factory=list)
-        name: str | None = None
 
         def map_assistant_message(self, message: ModelResponse) -> chat.ChatCompletionAssistantMessageParam:
             self.name = message.name

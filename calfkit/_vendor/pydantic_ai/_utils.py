@@ -28,7 +28,6 @@ from typing import (
 from anyio.to_thread import run_sync
 from pydantic import BaseModel, TypeAdapter
 from pydantic.json_schema import JsonSchemaValue
-from pydantic_graph._utils import AbstractSpan
 from typing_extensions import (
     ParamSpec,
     TypeIs,
@@ -37,15 +36,17 @@ from typing_extensions import (
 from typing_inspection import typing_objects
 from typing_inspection.introspection import is_union_origin
 
+from pydantic_graph._utils import AbstractSpan
+
 from . import exceptions
 
 AbstractSpan = AbstractSpan
 
 if TYPE_CHECKING:
+    from .agent import AgentRun, AgentRunResult
     from pydantic_graph import GraphRun, GraphRunResult
 
     from . import messages as _messages
-    from .agent import AgentRun, AgentRunResult
     from .tools import ObjectJsonSchema
 
 _P = ParamSpec('_P')

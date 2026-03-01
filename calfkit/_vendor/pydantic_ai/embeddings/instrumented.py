@@ -16,6 +16,7 @@ from ..models.instrumented import (
     CostCalculationFailedWarning,
     InstrumentationSettings,
 )
+
 from .base import EmbeddingModel, EmbedInputType
 from .result import EmbeddingResult
 from .settings import EmbeddingSettings

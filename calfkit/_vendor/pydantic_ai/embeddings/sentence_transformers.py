@@ -5,9 +5,9 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Any, cast
 
-import pydantic_ai._utils as _utils
-
+from .. import _utils as _utils
 from ..exceptions import UnexpectedModelBehavior
+
 from .base import EmbeddingModel, EmbedInputType
 from .result import EmbeddingResult
 from .settings import EmbeddingSettings

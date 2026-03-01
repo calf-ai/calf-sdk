@@ -29,7 +29,7 @@ try:
     from tenacity import RetryCallState, RetryError, retry, wait_exponential
 except ImportError as _import_error:
     raise ImportError(
-        "Please install `tenacity` to use the retries utilities, "
+        'Please install `tenacity` to use the retries utilities, '
         'you can use the `retries` optional group — `pip install "pydantic-ai-slim[retries]"`'
     ) from _import_error
 
@@ -46,7 +46,7 @@ if TYPE_CHECKING:
     from tenacity.stop import StopBaseT
     from tenacity.wait import WaitBaseT
 
-__all__ = ["RetryConfig", "TenacityTransport", "AsyncTenacityTransport", "wait_retry_after"]
+__all__ = ['RetryConfig', 'TenacityTransport', 'AsyncTenacityTransport', 'wait_retry_after']
 
 
 class RetryConfig(TypedDict, total=False):
@@ -356,7 +356,7 @@ def wait_retry_after(
     def wait_func(state: RetryCallState) -> float:
         exc = state.outcome.exception() if state.outcome else None
         if isinstance(exc, HTTPStatusError):
-            retry_after = exc.response.headers.get("retry-after")
+            retry_after = exc.response.headers.get('retry-after')
             if retry_after:
                 try:
                     # Try parsing as seconds first

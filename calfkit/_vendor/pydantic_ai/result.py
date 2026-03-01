@@ -9,8 +9,7 @@ from typing import TYPE_CHECKING, Any, Generic, cast, overload
 from pydantic import ValidationError
 from typing_extensions import TypeVar, deprecated
 
-from . import _utils, exceptions, models
-from . import messages as _messages
+from . import _utils, exceptions, messages as _messages, models
 from ._output import (
     OutputDataT_inv,
     OutputSchema,

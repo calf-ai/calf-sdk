@@ -7,19 +7,15 @@ from typing import TypeAlias, overload
 import httpx
 
 from .. import ModelProfile
-from .._json_schema import JsonSchema, JsonSchemaTransformer
 from ..exceptions import UserError
 from ..models import cached_async_http_client
 from ..profiles.anthropic import anthropic_model_profile
 from ..providers import Provider
 
+from .._json_schema import JsonSchema, JsonSchemaTransformer
+
 try:
-    from anthropic import (
-        AsyncAnthropic,
-        AsyncAnthropicBedrock,
-        AsyncAnthropicFoundry,
-        AsyncAnthropicVertex,
-    )
+    from anthropic import AsyncAnthropic, AsyncAnthropicBedrock, AsyncAnthropicFoundry, AsyncAnthropicVertex
 except ImportError as _import_error:
     raise ImportError(
         'Please install the `anthropic` package to use the Anthropic provider, '

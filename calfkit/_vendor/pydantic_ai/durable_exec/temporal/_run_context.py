@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic_ai.exceptions import UserError
-from pydantic_ai.tools import RunContext
 from typing_extensions import TypeVar
+
+from ...exceptions import UserError
+from ...tools import RunContext
 
 AgentDepsT = TypeVar('AgentDepsT', default=None, covariant=True)
 """Type variable for the agent dependencies in `RunContext`."""

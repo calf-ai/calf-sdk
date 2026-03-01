@@ -3,12 +3,13 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any, Literal
 
-from pydantic_ai import FunctionToolset, ToolsetTool
-from pydantic_ai.exceptions import UserError
-from pydantic_ai.tools import AgentDepsT, RunContext
-from pydantic_ai.toolsets.function import FunctionToolsetTool
 from temporalio import activity, workflow
 from temporalio.workflow import ActivityConfig
+
+from ... import FunctionToolset, ToolsetTool
+from ...exceptions import UserError
+from ...tools import AgentDepsT, RunContext
+from ...toolsets.function import FunctionToolsetTool
 
 from ._run_context import TemporalRunContext
 from ._toolset import (

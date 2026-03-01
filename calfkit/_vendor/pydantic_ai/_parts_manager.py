@@ -17,7 +17,6 @@ from collections.abc import Hashable, Iterator
 from dataclasses import dataclass, field, replace
 from typing import Any, TypeVar
 
-from ._utils import generate_tool_call_id as _generate_tool_call_id
 from .exceptions import UnexpectedModelBehavior
 from .messages import (
     BuiltinToolCallPart,
@@ -33,6 +32,8 @@ from .messages import (
     ToolCallPart,
     ToolCallPartDelta,
 )
+
+from ._utils import generate_tool_call_id as _generate_tool_call_id
 
 VendorId = Hashable
 """

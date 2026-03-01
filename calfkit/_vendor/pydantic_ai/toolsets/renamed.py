@@ -10,8 +10,7 @@ from .wrapper import WrapperToolset
 
 @dataclass
 class RenamedToolset(WrapperToolset[AgentDepsT]):
-    """A toolset that renames the tools it contains using a
-    dictionary mapping new names to original names.
+    """A toolset that renames the tools it contains using a dictionary mapping new names to original names.
 
     See [toolset docs](../toolsets.md#renaming-tools) for more information.
     """
@@ -35,11 +34,7 @@ class RenamedToolset(WrapperToolset[AgentDepsT]):
         return tools
 
     async def call_tool(
-        self,
-        name: str,
-        tool_args: dict[str, Any],
-        ctx: RunContext[AgentDepsT],
-        tool: ToolsetTool[AgentDepsT],
+        self, name: str, tool_args: dict[str, Any], ctx: RunContext[AgentDepsT], tool: ToolsetTool[AgentDepsT]
     ) -> Any:
         original_name = self.name_map.get(name, name)
         ctx = replace(ctx, tool_name=original_name)

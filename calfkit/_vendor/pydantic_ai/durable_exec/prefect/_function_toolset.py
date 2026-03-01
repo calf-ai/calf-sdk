@@ -3,8 +3,9 @@ from __future__ import annotations
 from typing import Any
 
 from prefect import task
-from pydantic_ai import FunctionToolset, ToolsetTool
-from pydantic_ai.tools import AgentDepsT, RunContext
+
+from ... import FunctionToolset, ToolsetTool
+from ...tools import AgentDepsT, RunContext
 
 from ._toolset import PrefectWrapperToolset
 from ._types import TaskConfig, default_task_config

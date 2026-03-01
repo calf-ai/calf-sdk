@@ -4,8 +4,8 @@ from abc import ABC
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from pydantic_ai import AbstractToolset, FunctionToolset, WrapperToolset
-from pydantic_ai.tools import AgentDepsT
+from ... import AbstractToolset, FunctionToolset, WrapperToolset
+from ...tools import AgentDepsT
 
 from ._types import TaskConfig
 
@@ -52,7 +52,7 @@ def prefectify_toolset(
         )
 
     try:
-        from pydantic_ai.mcp import MCPServer
+        from ...mcp import MCPServer
 
         from ._mcp_server import PrefectMCPServer
     except ImportError:

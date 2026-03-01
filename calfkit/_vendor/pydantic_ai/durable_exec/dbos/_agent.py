@@ -5,33 +5,25 @@ from contextlib import AbstractAsyncContextManager, asynccontextmanager, context
 from typing import Any, overload
 
 from dbos import DBOS, DBOSConfiguredInstance
-from pydantic_ai import (
+from typing_extensions import Never
+
+from ... import (
     AbstractToolset,
     AgentRunResultEvent,
     _utils,
-    models,
-)
-from pydantic_ai import (
     messages as _messages,
-)
-from pydantic_ai import (
+    models,
     usage as _usage,
 )
-from pydantic_ai.agent import (
-    AbstractAgent,
-    AgentRun,
-    AgentRunResult,
-    EventStreamHandler,
-    WrapperAgent,
-)
-from pydantic_ai.agent.abstract import AgentMetadata, Instructions, RunOutputDataT
-from pydantic_ai.builtin_tools import AbstractBuiltinTool
-from pydantic_ai.exceptions import UserError
-from pydantic_ai.models import Model
-from pydantic_ai.output import OutputDataT, OutputSpec
-from pydantic_ai.result import StreamedRunResult
-from pydantic_ai.settings import ModelSettings
-from pydantic_ai.tools import (
+from ...agent import AbstractAgent, AgentRun, AgentRunResult, EventStreamHandler, WrapperAgent
+from ...agent.abstract import AgentMetadata, Instructions, RunOutputDataT
+from ...builtin_tools import AbstractBuiltinTool
+from ...exceptions import UserError
+from ...models import Model
+from ...output import OutputDataT, OutputSpec
+from ...result import StreamedRunResult
+from ...settings import ModelSettings
+from ...tools import (
     AgentDepsT,
     BuiltinToolFunc,
     DeferredToolResults,
@@ -39,7 +31,6 @@ from pydantic_ai.tools import (
     Tool,
     ToolFuncEither,
 )
-from typing_extensions import Never
 
 from ._model import DBOSModel
 from ._utils import StepConfig
@@ -98,7 +89,7 @@ class DBOSAgent(WrapperAgent[AgentDepsT, OutputDataT], DBOSConfiguredInstance):
         def dbosify_toolset(toolset: AbstractToolset[AgentDepsT]) -> AbstractToolset[AgentDepsT]:
             # Replace MCPServer with DBOSMCPServer
             try:
-                from pydantic_ai.mcp import MCPServer
+                from ...mcp import MCPServer
 
                 from ._mcp_server import DBOSMCPServer
             except ImportError:
@@ -113,7 +104,7 @@ class DBOSAgent(WrapperAgent[AgentDepsT, OutputDataT], DBOSConfiguredInstance):
 
             # Replace FastMCPToolset with DBOSFastMCPToolset
             try:
-                from pydantic_ai.toolsets.fastmcp import FastMCPToolset
+                from ...toolsets.fastmcp import FastMCPToolset
 
                 from ._fastmcp_toolset import DBOSFastMCPToolset
             except ImportError:
@@ -338,7 +329,7 @@ class DBOSAgent(WrapperAgent[AgentDepsT, OutputDataT], DBOSConfiguredInstance):
 
         Example:
         ```python
-        from pydantic_ai import Agent
+        from ... import Agent
 
         agent = Agent('openai:gpt-4o')
 
@@ -462,7 +453,7 @@ class DBOSAgent(WrapperAgent[AgentDepsT, OutputDataT], DBOSConfiguredInstance):
 
         Example:
         ```python
-        from pydantic_ai import Agent
+        from ... import Agent
 
         agent = Agent('openai:gpt-4o')
 
@@ -583,7 +574,7 @@ class DBOSAgent(WrapperAgent[AgentDepsT, OutputDataT], DBOSConfiguredInstance):
 
         Example:
         ```python
-        from pydantic_ai import Agent
+        from ... import Agent
 
         agent = Agent('openai:gpt-4o')
 
@@ -706,7 +697,7 @@ class DBOSAgent(WrapperAgent[AgentDepsT, OutputDataT], DBOSConfiguredInstance):
 
         Example:
         ```python
-        from pydantic_ai import Agent, AgentRunResultEvent, AgentStreamEvent
+        from ... import Agent, AgentRunResultEvent, AgentStreamEvent
 
         agent = Agent('openai:gpt-4o')
 
@@ -836,7 +827,7 @@ class DBOSAgent(WrapperAgent[AgentDepsT, OutputDataT], DBOSConfiguredInstance):
 
         Example:
         ```python
-        from pydantic_ai import Agent
+        from ... import Agent
 
         agent = Agent('openai:gpt-4o')
 

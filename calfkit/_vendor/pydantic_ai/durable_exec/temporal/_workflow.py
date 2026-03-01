@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Any
 
-from pydantic_ai.durable_exec.temporal import TemporalAgent
+from ...durable_exec.temporal import TemporalAgent
 
 
 class PydanticAIWorkflow:

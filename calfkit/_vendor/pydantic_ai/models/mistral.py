@@ -12,9 +12,7 @@ from typing_extensions import assert_never
 
 from .. import ModelHTTPError, UnexpectedModelBehavior, _utils
 from .._run_context import RunContext
-from .._utils import generate_tool_call_id as _generate_tool_call_id
-from .._utils import now_utc as _now_utc
-from .._utils import number_to_datetime
+from .._utils import generate_tool_call_id as _generate_tool_call_id, now_utc as _now_utc, number_to_datetime
 from ..exceptions import ModelAPIError
 from ..messages import (
     BinaryContent,
@@ -55,63 +53,27 @@ from . import (
 try:
     from mistralai import (
         UNSET,
-        Mistral,
-    )
-    from mistralai import (
         CompletionChunk as MistralCompletionChunk,
-    )
-    from mistralai import (
         Content as MistralContent,
-    )
-    from mistralai import (
         ContentChunk as MistralContentChunk,
-    )
-    from mistralai import (
         DocumentURLChunk as MistralDocumentURLChunk,
-    )
-    from mistralai import (
         FunctionCall as MistralFunctionCall,
-    )
-    from mistralai import (
         ImageURL as MistralImageURL,
-    )
-    from mistralai import (
         ImageURLChunk as MistralImageURLChunk,
-    )
-    from mistralai import (
+        Mistral,
         OptionalNullable as MistralOptionalNullable,
-    )
-    from mistralai import (
         ReferenceChunk as MistralReferenceChunk,
-    )
-    from mistralai import (
         TextChunk as MistralTextChunk,
-    )
-    from mistralai import (
         ThinkChunk as MistralThinkChunk,
-    )
-    from mistralai import (
         ToolChoiceEnum as MistralToolChoiceEnum,
     )
     from mistralai.models import (
         ChatCompletionResponse as MistralChatCompletionResponse,
-    )
-    from mistralai.models import (
         CompletionEvent as MistralCompletionEvent,
-    )
-    from mistralai.models import (
         FinishReason as MistralFinishReason,
-    )
-    from mistralai.models import (
         Messages as MistralMessages,
-    )
-    from mistralai.models import (
         SDKError,
-    )
-    from mistralai.models import (
         Tool as MistralTool,
-    )
-    from mistralai.models import (
         ToolCall as MistralToolCall,
     )
     from mistralai.models.assistantmessage import AssistantMessage as MistralAssistantMessage

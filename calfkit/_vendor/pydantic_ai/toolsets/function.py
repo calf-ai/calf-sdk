@@ -54,7 +54,7 @@ class FunctionToolset(AbstractToolset[AgentDepsT]):
         *,
         max_retries: int = 1,
         timeout: float | None = None,
-        docstring_format: DocstringFormat = "auto",
+        docstring_format: DocstringFormat = 'auto',
         require_parameter_descriptions: bool = False,
         schema_generator: type[GenerateJsonSchema] = GenerateToolJsonSchema,
         strict: bool | None = None,
@@ -114,9 +114,7 @@ class FunctionToolset(AbstractToolset[AgentDepsT]):
         return self._id
 
     @overload
-    def tool(
-        self, func: ToolFuncEither[AgentDepsT, ToolParams], /
-    ) -> ToolFuncEither[AgentDepsT, ToolParams]: ...
+    def tool(self, func: ToolFuncEither[AgentDepsT, ToolParams], /) -> ToolFuncEither[AgentDepsT, ToolParams]: ...
 
     @overload
     def tool(
@@ -135,9 +133,7 @@ class FunctionToolset(AbstractToolset[AgentDepsT]):
         requires_approval: bool | None = None,
         metadata: dict[str, Any] | None = None,
         timeout: float | None = None,
-    ) -> Callable[
-        [ToolFuncEither[AgentDepsT, ToolParams]], ToolFuncEither[AgentDepsT, ToolParams]
-    ]: ...
+    ) -> Callable[[ToolFuncEither[AgentDepsT, ToolParams]], ToolFuncEither[AgentDepsT, ToolParams]]: ...
 
     def tool(
         self,
@@ -331,7 +327,7 @@ class FunctionToolset(AbstractToolset[AgentDepsT]):
             tool: The tool to add.
         """
         if tool.name in self.tools:
-            raise UserError(f"Tool name conflicts with existing tool: {tool.name!r}")
+            raise UserError(f'Tool name conflicts with existing tool: {tool.name!r}')
         if tool.max_retries is None:
             tool.max_retries = self.max_retries
         if self.metadata is not None:
@@ -355,14 +351,9 @@ class FunctionToolset(AbstractToolset[AgentDepsT]):
             new_name = tool_def.name
             if new_name in tools:
                 if new_name != original_name:
-                    raise UserError(
-                        f"Renaming tool {original_name!r} to {new_name!r} "
-                        "conflicts with existing tool."
-                    )
+                    raise UserError(f'Renaming tool {original_name!r} to {new_name!r} conflicts with existing tool.')
                 else:
-                    raise UserError(
-                        f"Tool name conflicts with previously renamed tool: {new_name!r}."
-                    )
+                    raise UserError(f'Tool name conflicts with previously renamed tool: {new_name!r}.')
 
             tools[new_name] = FunctionToolsetTool(
                 toolset=self,
@@ -376,11 +367,7 @@ class FunctionToolset(AbstractToolset[AgentDepsT]):
         return tools
 
     async def call_tool(
-        self,
-        name: str,
-        tool_args: dict[str, Any],
-        ctx: RunContext[AgentDepsT],
-        tool: ToolsetTool[AgentDepsT],
+        self, name: str, tool_args: dict[str, Any], ctx: RunContext[AgentDepsT], tool: ToolsetTool[AgentDepsT]
     ) -> Any:
         assert isinstance(tool, FunctionToolsetTool)
 
@@ -391,6 +378,6 @@ class FunctionToolset(AbstractToolset[AgentDepsT]):
                 with anyio.fail_after(timeout):
                     return await tool.call_func(tool_args, ctx)
             except TimeoutError:
-                raise ModelRetry(f"Timed out after {timeout} seconds.") from None
+                raise ModelRetry(f'Timed out after {timeout} seconds.') from None
         else:
             return await tool.call_func(tool_args, ctx)

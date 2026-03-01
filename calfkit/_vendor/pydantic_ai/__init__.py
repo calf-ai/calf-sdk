@@ -1,6 +1,14 @@
-# Note: agent module removed in vendored version
-# Agent-related imports (Agent, CallToolsNode, etc.) are not available
+from __future__ import annotations as _annotations
 
+from .agent import (
+    Agent,
+    CallToolsNode,
+    EndStrategy,
+    InstrumentationSettings,
+    ModelRequestNode,
+    UserPromptNode,
+    capture_run_messages,
+)
 from .builtin_tools import (
     CodeExecutionTool,
     FileSearchTool,
@@ -93,19 +101,9 @@ from .profiles import (
     ModelProfile,
     ModelProfileSpec,
 )
-
-# Note: run module removed in vendored version
-# AgentRun, AgentRunResult, AgentRunResultEvent are not available
+from .run import AgentRun, AgentRunResult, AgentRunResultEvent
 from .settings import ModelSettings
-from .tools import (
-    DeferredToolRequests,
-    DeferredToolResults,
-    RunContext,
-    Tool,
-    ToolApproved,
-    ToolDefinition,
-    ToolDenied,
-)
+from .tools import DeferredToolRequests, DeferredToolResults, RunContext, Tool, ToolApproved, ToolDefinition, ToolDenied
 from .toolsets import (
     AbstractToolset,
     ApprovalRequiredToolset,
@@ -124,7 +122,14 @@ from .usage import RequestUsage, RunUsage, UsageLimits
 
 __all__ = (
     '__version__',
-    # Note: agent exports removed (Agent, EndStrategy, CallToolsNode, etc.)
+    # agent
+    'Agent',
+    'EndStrategy',
+    'CallToolsNode',
+    'ModelRequestNode',
+    'UserPromptNode',
+    'capture_run_messages',
+    'InstrumentationSettings',
     # embeddings
     'Embedder',
     'EmbeddingModel',
@@ -245,7 +250,9 @@ __all__ = (
     'RunUsage',
     'RequestUsage',
     'UsageLimits',
-    # Note: run exports removed (AgentRun, AgentRunResult, AgentRunResultEvent)
+    # run
+    'AgentRun',
+    'AgentRunResult',
+    'AgentRunResultEvent',
 )
-# Vendored version - hardcoded since pydantic_ai_slim package is not installed
 __version__ = '1.47.0'

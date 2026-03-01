@@ -72,6 +72,7 @@ try:
         ExecutableCodeDict,
         FileDataDict,
         FileSearchDict,
+        FinishReason as GoogleFinishReason,
         FunctionCallDict,
         FunctionCallingConfigDict,
         FunctionCallingConfigMode,
@@ -96,9 +97,6 @@ try:
         UrlContextDict,
         UrlContextMetadata,
         VideoMetadataDict,
-    )
-    from google.genai.types import (
-        FinishReason as GoogleFinishReason,
     )
 except ImportError as _import_error:
     raise ImportError(

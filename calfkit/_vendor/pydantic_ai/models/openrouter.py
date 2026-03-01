@@ -22,11 +22,7 @@ from . import ModelRequestParameters
 try:
     from openai import APIError, AsyncOpenAI
     from openai.types import chat, completion_usage
-    from openai.types.chat import (
-        chat_completion,
-        chat_completion_chunk,
-        chat_completion_message_function_tool_call,
-    )
+    from openai.types.chat import chat_completion, chat_completion_chunk, chat_completion_message_function_tool_call
     from openai.types.chat.chat_completion_message import Annotation as _OpenAIAnnotation
 
     from .openai import (

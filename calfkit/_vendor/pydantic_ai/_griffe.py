@@ -7,8 +7,7 @@ from contextlib import contextmanager
 from inspect import Signature
 from typing import TYPE_CHECKING, Any, Literal, cast
 
-from griffe import Docstring, DocstringSectionKind, GoogleOptions
-from griffe import Object as GriffeObject
+from griffe import Docstring, DocstringSectionKind, GoogleOptions, Object as GriffeObject
 
 if TYPE_CHECKING:
     from .tools import DocstringFormat

@@ -6,17 +6,18 @@ from datetime import datetime
 from typing import Any
 
 from dbos import DBOS
-from pydantic_ai import (
+
+from ... import (
     ModelMessage,
     ModelResponse,
     ModelResponseStreamEvent,
 )
-from pydantic_ai.agent import EventStreamHandler
-from pydantic_ai.models import Model, ModelRequestParameters, StreamedResponse
-from pydantic_ai.models.wrapper import WrapperModel
-from pydantic_ai.settings import ModelSettings
-from pydantic_ai.tools import RunContext
-from pydantic_ai.usage import RequestUsage
+from ...agent import EventStreamHandler
+from ...models import Model, ModelRequestParameters, StreamedResponse
+from ...models.wrapper import WrapperModel
+from ...settings import ModelSettings
+from ...tools import RunContext
+from ...usage import RequestUsage
 
 from ._utils import StepConfig
 

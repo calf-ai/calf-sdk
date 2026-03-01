@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from ..usage import RequestUsage
+
 from .base import EmbeddingModel, EmbedInputType
 from .result import EmbeddingResult
 from .settings import EmbeddingSettings

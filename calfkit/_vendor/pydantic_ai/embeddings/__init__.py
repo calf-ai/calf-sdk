@@ -11,6 +11,7 @@ from ..exceptions import UserError
 from ..models import OpenAIChatCompatibleProvider, OpenAIResponsesCompatibleProvider
 from ..models.instrumented import InstrumentationSettings
 from ..providers import Provider, infer_provider
+
 from .base import EmbeddingModel
 from .instrumented import InstrumentedEmbeddingModel, instrument_embedding_model
 from .result import EmbeddingResult, EmbedInputType

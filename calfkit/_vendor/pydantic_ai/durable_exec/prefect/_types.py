@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from prefect.cache_policies import CachePolicy
 from prefect.results import ResultStorage
-from pydantic_ai.durable_exec.prefect._cache_policies import DEFAULT_PYDANTIC_AI_CACHE_POLICY
 from typing_extensions import TypedDict
+
+from ...durable_exec.prefect._cache_policies import DEFAULT_PYDANTIC_AI_CACHE_POLICY
 
 
 class TaskConfig(TypedDict, total=False):

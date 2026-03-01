@@ -7,17 +7,18 @@ from typing import Any
 
 from prefect import task
 from prefect.context import FlowRunContext
-from pydantic_ai import (
+
+from ... import (
     ModelMessage,
     ModelResponse,
     ModelResponseStreamEvent,
 )
-from pydantic_ai.agent import EventStreamHandler
-from pydantic_ai.models import ModelRequestParameters, StreamedResponse
-from pydantic_ai.models.wrapper import WrapperModel
-from pydantic_ai.settings import ModelSettings
-from pydantic_ai.tools import RunContext
-from pydantic_ai.usage import RequestUsage
+from ...agent import EventStreamHandler
+from ...models import ModelRequestParameters, StreamedResponse
+from ...models.wrapper import WrapperModel
+from ...settings import ModelSettings
+from ...tools import RunContext
+from ...usage import RequestUsage
 
 from ._types import TaskConfig, default_task_config
 
