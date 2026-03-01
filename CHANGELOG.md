@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.14](https://github.com/calf-ai/calfkit-sdk/compare/v0.1.13...v0.1.14) (2026-03-01)
+
+
+### Features
+
+* foundational refactors for composable multi-agent orchestration feature ([#85](https://github.com/calf-ai/calfkit-sdk/issues/85)) ([e506af9](https://github.com/calf-ai/calfkit-sdk/commit/e506af9214fb1f36b0dfb29418d3308a683f8175))
+
 ## [0.1.13](https://github.com/calf-ai/calfkit-sdk/compare/v0.1.12...v0.1.13) (2026-02-27)
 
 
