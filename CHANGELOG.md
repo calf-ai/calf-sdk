@@ -43,7 +43,7 @@
 * agent-to-agent communication and groupchat support  ([#56](https://github.com/calf-ai/calfkit-sdk/issues/56)) ([8d7fd4d](https://github.com/calf-ai/calfkit-sdk/commit/8d7fd4d17e91d1f31a8ac70355bbbaab452f5ed6))
 * declarative private topic subscriptions and caller pattern updates ([#61](https://github.com/calf-ai/calfkit-sdk/issues/61)) ([b37c423](https://github.com/calf-ai/calfkit-sdk/commit/b37c4238fc4db7d2ef993efe6945ed45e68f5668))
 * private reply-topic routing for multi-agent deployments and trading bots example  ([#58](https://github.com/calf-ai/calfkit-sdk/issues/58)) ([3f13c80](https://github.com/calf-ai/calfkit-sdk/commit/3f13c807fe746a511d5f2295de5c8a067a407b92))
-* stack-based agent delegation with @entrypoint/[@returnpoint](https://github.com/returnpoint) decorators ([#63](https://github.com/calf-ai/calfkit-sdk/issues/63)) ([2418fd6](https://github.com/calf-ai/calfkit-sdk/commit/2418fd6bf173f2b979c4a48654c86a0058866c6e))
+* stack-based agent handoff with @entrypoint/[@returnpoint](https://github.com/returnpoint) decorators ([#63](https://github.com/calf-ai/calfkit-sdk/issues/63)) ([2418fd6](https://github.com/calf-ai/calfkit-sdk/commit/2418fd6bf173f2b979c4a48654c86a0058866c6e))
 
 
 ### Documentation
