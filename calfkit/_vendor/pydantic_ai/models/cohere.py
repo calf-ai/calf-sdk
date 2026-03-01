@@ -6,10 +6,10 @@ from typing import Literal, cast
 
 from typing_extensions import assert_never
 
-from .. import ModelHTTPError, usage
-from .._utils import generate_tool_call_id as _generate_tool_call_id
-from .._utils import guard_tool_call_id as _guard_tool_call_id
 from ..exceptions import ModelAPIError
+
+from .. import ModelHTTPError, usage
+from .._utils import generate_tool_call_id as _generate_tool_call_id, guard_tool_call_id as _guard_tool_call_id
 from ..messages import (
     BuiltinToolCallPart,
     BuiltinToolReturnPart,

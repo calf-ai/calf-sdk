@@ -18,8 +18,7 @@ from uuid import uuid4
 
 import httpx
 import pydantic
-from httpx import USE_CLIENT_DEFAULT
-from httpx import Response as HTTPResponse
+from httpx import USE_CLIENT_DEFAULT, Response as HTTPResponse
 from typing_extensions import NotRequired, TypedDict, assert_never, deprecated
 
 from .. import ModelHTTPError, UnexpectedModelBehavior, _utils, usage
@@ -51,14 +50,7 @@ from ..profiles import ModelProfileSpec
 from ..providers import Provider
 from ..settings import ModelSettings
 from ..tools import ToolDefinition
-from . import (
-    Model,
-    ModelRequestParameters,
-    StreamedResponse,
-    check_allow_model_requests,
-    download_item,
-    get_user_agent,
-)
+from . import Model, ModelRequestParameters, StreamedResponse, check_allow_model_requests, download_item, get_user_agent
 
 LatestGeminiModelNames = Literal[
     'gemini-2.0-flash',
@@ -146,15 +138,11 @@ class GeminiModel(Model):
 
         if isinstance(provider, str):
             if provider == 'google-gla':
-                from ..providers.google_gla import (
-                    GoogleGLAProvider,  # type: ignore[reportDeprecated]
-                )
+                from ..providers.google_gla import GoogleGLAProvider  # type: ignore[reportDeprecated]
 
                 provider = GoogleGLAProvider()  # type: ignore[reportDeprecated]
             else:
-                from ..providers.google_vertex import (
-                    GoogleVertexProvider,  # type: ignore[reportDeprecated]
-                )
+                from ..providers.google_vertex import GoogleVertexProvider  # type: ignore[reportDeprecated]
 
                 provider = GoogleVertexProvider()  # type: ignore[reportDeprecated]
         self._provider = provider

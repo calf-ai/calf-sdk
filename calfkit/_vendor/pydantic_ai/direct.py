@@ -16,12 +16,11 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from types import TracebackType
 
+from .usage import RequestUsage
 from pydantic_graph._utils import get_event_loop as _get_event_loop
 
-from . import messages, models, settings
-from .models import StreamedResponse
-from .models import instrumented as instrumented_models
-from .usage import RequestUsage
+from . import agent, messages, models, settings
+from .models import StreamedResponse, instrumented as instrumented_models
 
 __all__ = (
     'model_request',
@@ -29,28 +28,9 @@ __all__ = (
     'model_request_stream',
     'model_request_stream_sync',
     'StreamedResponseSync',
-    'set_instrument_default',
 )
 
 STREAM_INITIALIZATION_TIMEOUT = 30
-
-# Global instrumentation default (replaces agent.Agent._instrument_default)
-# Set to True to enable OpenTelemetry/Logfire instrumentation by default
-_instrument_default: bool = False
-
-
-def set_instrument_default(enabled: bool) -> None:
-    """Set the default instrumentation setting for model_request calls.
-
-    This replaces the behavior of `logfire.instrument_pydantic_ai()` setting
-    `Agent._instrument_default`. Call this with `True` to enable instrumentation
-    by default for all model_request calls.
-
-    Args:
-        enabled: Whether to enable instrumentation by default.
-    """
-    global _instrument_default
-    _instrument_default = enabled
 
 
 async def model_request(
@@ -294,7 +274,7 @@ def _prepare_model(
     model_instance = models.infer_model(model)
 
     if instrument is None:
-        instrument = _instrument_default
+        instrument = agent.Agent._instrument_default  # pyright: ignore[reportPrivateUsage]
 
     return instrumented_models.instrument_model(model_instance, instrument)
 

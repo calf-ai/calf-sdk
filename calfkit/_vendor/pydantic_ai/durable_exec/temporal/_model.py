@@ -9,18 +9,19 @@ from datetime import datetime
 from typing import Any, cast
 
 from pydantic import ConfigDict, with_config
-from pydantic_ai import ModelMessage, ModelResponse, ModelResponseStreamEvent, models
-from pydantic_ai._run_context import get_current_run_context
-from pydantic_ai.agent import EventStreamHandler
-from pydantic_ai.exceptions import UserError
-from pydantic_ai.models import Model, ModelRequestParameters, StreamedResponse
-from pydantic_ai.models.wrapper import WrapperModel
-from pydantic_ai.providers import Provider
-from pydantic_ai.settings import ModelSettings
-from pydantic_ai.tools import AgentDepsT, RunContext
-from pydantic_ai.usage import RequestUsage
 from temporalio import activity, workflow
 from temporalio.workflow import ActivityConfig
+
+from ... import ModelMessage, ModelResponse, ModelResponseStreamEvent, models
+from ..._run_context import get_current_run_context
+from ...agent import EventStreamHandler
+from ...exceptions import UserError
+from ...models import Model, ModelRequestParameters, StreamedResponse
+from ...models.wrapper import WrapperModel
+from ...providers import Provider
+from ...settings import ModelSettings
+from ...tools import AgentDepsT, RunContext
+from ...usage import RequestUsage
 
 from ._run_context import TemporalRunContext
 

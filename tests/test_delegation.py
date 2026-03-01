@@ -11,7 +11,7 @@ from calfkit.broker.broker import BrokerClient
 from calfkit.nodes.agent_router_node import AgentRouterNode
 from calfkit.nodes.base_tool_node import agent_tool
 from calfkit.nodes.chat_node import ChatNode
-from calfkit.prebuilt_agent_tools.handoff_tool import HandoffTool
+from calfkit.prebuilt_agent_tools.delegation_tool import DelegationTool
 from calfkit.providers.pydantic_ai.openai import OpenAIModelClient
 from calfkit.runners.service import NodesService
 from calfkit.runners.service_client import RouterServiceClient
@@ -45,7 +45,7 @@ def get_weather(location: str) -> str:
 
 
 @pytest.fixture(scope="session")
-def deploy_handoff_broker() -> tuple[BrokerClient, AgentRouterNode, AgentRouterNode]:
+def deploy_delegation_broker() -> tuple[BrokerClient, AgentRouterNode, AgentRouterNode]:
     broker = BrokerClient()
     service = NodesService(broker)
 
@@ -70,19 +70,19 @@ def deploy_handoff_broker() -> tuple[BrokerClient, AgentRouterNode, AgentRouterN
     )
     service.register_node(agent_b_router, group_id="agent_b")
 
-    # 4. Deploy HandoffTool scoped to Agent A
-    handoff = HandoffTool(nodes=[agent_b_router])
-    service.register_node(handoff)
+    # 4. Deploy DelegationTool scoped to Agent A
+    delegation = DelegationTool(nodes=[agent_b_router])
+    service.register_node(delegation)
 
     # 5. Deploy Agent A (the dispatcher that delegates)
     agent_a_router = AgentRouterNode(
         chat_node=ChatNode(),
         name="agent_a",
-        tool_nodes=[handoff],
+        tool_nodes=[delegation],
         message_history_store=InMemoryMessageHistoryStore(),
         system_prompt=(
             "You are a dispatcher agent. You do NOT answer questions yourself. "
-            "You can use the handoff_tool to delegate questions or tasks to another AI agent. "
+            "You can use the delegation_tool to delegate questions or tasks to another AI agent. "
             "After receiving the delegation result, you should summarize the response for the user."
         ),
     )
@@ -93,13 +93,13 @@ def deploy_handoff_broker() -> tuple[BrokerClient, AgentRouterNode, AgentRouterN
 
 @pytest.mark.asyncio
 @skip_if_no_openai_key
-async def test_handoff_delegation(deploy_handoff_broker):
-    """Test that Agent A delegates to Agent B via HandoffTool and receives a response."""
-    broker, agent_a_router, _ = deploy_handoff_broker
+async def test_delegation(deploy_delegation_broker):
+    """Test that Agent A delegates to Agent B via DelegationTool and receives a response."""
+    broker, agent_a_router, _ = deploy_delegation_broker
     thread_id = str(next(counter))
 
     async with TestKafkaBroker(broker) as _:
-        print(f"\n\n{'=' * 10}Start Handoff Test{'=' * 10}")
+        print(f"\n\n{'=' * 10}Start Delegation Test{'=' * 10}")
 
         client = RouterServiceClient(broker, agent_a_router)
         response = await client.request(

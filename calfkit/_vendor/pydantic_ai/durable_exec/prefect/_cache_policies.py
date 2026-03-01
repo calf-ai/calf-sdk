@@ -3,8 +3,9 @@ from typing import Any, TypeGuard
 
 from prefect.cache_policies import INPUTS, RUN_ID, TASK_SOURCE, CachePolicy
 from prefect.context import TaskRunContext
-from pydantic_ai import ToolsetTool
-from pydantic_ai.tools import RunContext
+
+from ... import ToolsetTool
+from ...tools import RunContext
 
 
 def _is_dict(obj: Any) -> TypeGuard[dict[str, Any]]:

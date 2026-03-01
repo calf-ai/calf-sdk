@@ -38,7 +38,7 @@ try:
 
 except ImportError as _import_error:
     raise ImportError(
-        "Please install the `fastmcp` package to use the FastMCP server, "
+        'Please install the `fastmcp` package to use the FastMCP server, '
         'you can use the `fastmcp` optional group — `pip install "pydantic-ai-slim[fastmcp]"`'
     ) from _import_error
 
@@ -49,9 +49,9 @@ if TYPE_CHECKING:
 
 FastMCPToolResult = messages.BinaryContent | dict[str, Any] | str | None
 
-ToolErrorBehavior = Literal["model_retry", "error"]
+ToolErrorBehavior = Literal['model_retry', 'error']
 
-UNKNOWN_BINARY_MEDIA_TYPE = "application/octet-stream"
+UNKNOWN_BINARY_MEDIA_TYPE = 'application/octet-stream'
 
 
 @dataclass(init=False)
@@ -68,7 +68,7 @@ class FastMCPToolset(AbstractToolset[AgentDepsT]):
 
     _: KW_ONLY
 
-    tool_error_behavior: Literal["model_retry", "error"]
+    tool_error_behavior: Literal['model_retry', 'error']
     """The behavior to take when a tool error occurs."""
 
     max_retries: int
@@ -89,7 +89,7 @@ class FastMCPToolset(AbstractToolset[AgentDepsT]):
         | str,
         *,
         max_retries: int = 1,
-        tool_error_behavior: Literal["model_retry", "error"] = "model_retry",
+        tool_error_behavior: Literal['model_retry', 'error'] = 'model_retry',
         id: str | None = None,
     ) -> None:
         if isinstance(client, Client):
@@ -137,11 +137,9 @@ class FastMCPToolset(AbstractToolset[AgentDepsT]):
                         description=mcp_tool.description,
                         parameters_json_schema=mcp_tool.inputSchema,
                         metadata={
-                            "meta": mcp_tool.meta,
-                            "annotations": mcp_tool.annotations.model_dump()
-                            if mcp_tool.annotations
-                            else None,
-                            "output_schema": mcp_tool.outputSchema or None,
+                            'meta': mcp_tool.meta,
+                            'annotations': mcp_tool.annotations.model_dump() if mcp_tool.annotations else None,
+                            'output_schema': mcp_tool.outputSchema or None,
                         },
                     )
                 )
@@ -149,19 +147,13 @@ class FastMCPToolset(AbstractToolset[AgentDepsT]):
             }
 
     async def call_tool(
-        self,
-        name: str,
-        tool_args: dict[str, Any],
-        ctx: RunContext[AgentDepsT],
-        tool: ToolsetTool[AgentDepsT],
+        self, name: str, tool_args: dict[str, Any], ctx: RunContext[AgentDepsT], tool: ToolsetTool[AgentDepsT]
     ) -> Any:
         async with self:
             try:
-                call_tool_result: CallToolResult = await self.client.call_tool(
-                    name=name, arguments=tool_args
-                )
+                call_tool_result: CallToolResult = await self.client.call_tool(name=name, arguments=tool_args)
             except ToolError as e:
-                if self.tool_error_behavior == "model_retry":
+                if self.tool_error_behavior == 'model_retry':
                     raise ModelRetry(message=str(e)) from e
                 else:
                     raise e
@@ -182,9 +174,7 @@ class FastMCPToolset(AbstractToolset[AgentDepsT]):
         )
 
 
-def _map_fastmcp_tool_results(
-    parts: list[ContentBlock],
-) -> list[FastMCPToolResult] | FastMCPToolResult:
+def _map_fastmcp_tool_results(parts: list[ContentBlock]) -> list[FastMCPToolResult] | FastMCPToolResult:
     """Map FastMCP tool results to toolset tool results."""
     mapped_results = [_map_fastmcp_tool_result(part) for part in parts]
 
@@ -212,7 +202,7 @@ def _map_fastmcp_tool_result(part: ContentBlock) -> FastMCPToolResult:
     elif isinstance(part, ResourceLink):
         # ResourceLink is not yet supported by the FastMCP toolset as reading resources is not yet supported.
         raise NotImplementedError(
-            "ResourceLink is not supported by the FastMCP toolset as reading resources is not yet supported."
+            'ResourceLink is not supported by the FastMCP toolset as reading resources is not yet supported.'
         )
     else:
         assert_never(part)

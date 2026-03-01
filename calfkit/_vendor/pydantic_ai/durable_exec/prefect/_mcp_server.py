@@ -4,15 +4,16 @@ from abc import ABC
 from typing import TYPE_CHECKING, Any
 
 from prefect import task
-from pydantic_ai import ToolsetTool
-from pydantic_ai.tools import AgentDepsT, RunContext
 from typing_extensions import Self
+
+from ... import ToolsetTool
+from ...tools import AgentDepsT, RunContext
 
 from ._toolset import PrefectWrapperToolset
 from ._types import TaskConfig, default_task_config
 
 if TYPE_CHECKING:
-    from pydantic_ai.mcp import MCPServer, ToolResult
+    from ...mcp import MCPServer, ToolResult
 
 
 class PrefectMCPServer(PrefectWrapperToolset[AgentDepsT], ABC):

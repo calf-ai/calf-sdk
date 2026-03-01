@@ -16,14 +16,12 @@ from urllib.parse import urlparse
 
 import pydantic
 import pydantic_core
-from genai_prices import calc_price
-from genai_prices import types as genai_types
+from genai_prices import calc_price, types as genai_types
 from opentelemetry._logs import LogRecord  # pyright: ignore[reportPrivateImportUsage]
 from typing_extensions import deprecated
 
 from . import _otel_messages, _utils
-from ._utils import generate_tool_call_id as _generate_tool_call_id
-from ._utils import now_utc as _now_utc
+from ._utils import generate_tool_call_id as _generate_tool_call_id, now_utc as _now_utc
 from .exceptions import UnexpectedModelBehavior
 from .usage import RequestUsage
 
@@ -1302,9 +1300,6 @@ class ModelResponse:
     """An optional name for the participant in a multi-agent conversation.
 
     Provides the model information to differentiate between participants of the same role.
-    Distinct from `model_name`, which identifies the LLM, not the conversational participant.
-    Not populated from API responses (OpenAI does not return `name` in completions).
-    Set by application code for attribution in multi-agent scenarios.
     """
 
     timestamp: datetime = field(default_factory=_now_utc)

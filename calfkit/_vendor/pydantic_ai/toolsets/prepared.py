@@ -11,8 +11,7 @@ from .wrapper import WrapperToolset
 
 @dataclass
 class PreparedToolset(WrapperToolset[AgentDepsT]):
-    """A toolset that prepares the tools it contains using a prepare function that
-    takes the agent context and the original tool definitions.
+    """A toolset that prepares the tools it contains using a prepare function that takes the agent context and the original tool definitions.
 
     See [toolset docs](../toolsets.md#preparing-tool-definitions) for more information.
     """
@@ -23,14 +22,12 @@ class PreparedToolset(WrapperToolset[AgentDepsT]):
         original_tools = await super().get_tools(ctx)
         original_tool_defs = [tool.tool_def for tool in original_tools.values()]
         prepared_tool_defs_by_name = {
-            tool_def.name: tool_def
-            for tool_def in (await self.prepare_func(ctx, original_tool_defs) or [])
+            tool_def.name: tool_def for tool_def in (await self.prepare_func(ctx, original_tool_defs) or [])
         }
 
         if len(prepared_tool_defs_by_name.keys() - original_tools.keys()) > 0:
             raise UserError(
-                "Prepare function cannot add or rename tools. Use `FunctionToolset.add_function()` "
-                "or `RenamedToolset` instead."
+                'Prepare function cannot add or rename tools. Use `FunctionToolset.add_function()` or `RenamedToolset` instead.'
             )
 
         return {

@@ -6,13 +6,14 @@ from dataclasses import dataclass
 from typing import Annotated, Any, Literal
 
 from pydantic import ConfigDict, Discriminator, with_config
-from pydantic_ai import AbstractToolset, FunctionToolset, ToolsetTool, WrapperToolset
-from pydantic_ai.exceptions import ApprovalRequired, CallDeferred, ModelRetry
-from pydantic_ai.tools import AgentDepsT, RunContext, ToolDefinition
-from pydantic_ai.toolsets._dynamic import DynamicToolset
 from temporalio import workflow
 from temporalio.workflow import ActivityConfig
 from typing_extensions import Self, assert_never
+
+from ... import AbstractToolset, FunctionToolset, ToolsetTool, WrapperToolset
+from ...exceptions import ApprovalRequired, CallDeferred, ModelRetry
+from ...tools import AgentDepsT, RunContext, ToolDefinition
+from ...toolsets._dynamic import DynamicToolset
 
 from ._run_context import TemporalRunContext
 
@@ -172,7 +173,7 @@ def temporalize_toolset(
         )
 
     try:
-        from pydantic_ai.mcp import MCPServer
+        from ...mcp import MCPServer
 
         from ._mcp_server import TemporalMCPServer
     except ImportError:
@@ -189,7 +190,7 @@ def temporalize_toolset(
             )
 
     try:
-        from pydantic_ai.toolsets.fastmcp import FastMCPToolset
+        from ...toolsets.fastmcp import FastMCPToolset
 
         from ._fastmcp_toolset import TemporalFastMCPToolset
     except ImportError:

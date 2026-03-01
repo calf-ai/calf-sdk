@@ -35,10 +35,7 @@ from ..settings import ModelSettings
 from ..tools import ToolDefinition
 from ..usage import RequestUsage
 from . import Model, ModelRequestParameters, StreamedResponse
-from .function import (  # pyright: ignore[reportPrivateUsage]
-    _estimate_string_tokens,
-    _estimate_usage,
-)
+from .function import _estimate_string_tokens, _estimate_usage  # pyright: ignore[reportPrivateUsage]
 
 
 @dataclass

@@ -6,6 +6,7 @@ from .. import _utils
 from ..exceptions import ModelAPIError, ModelHTTPError, UserError
 from ..providers import Provider, infer_provider
 from ..usage import RequestUsage
+
 from . import OpenAIEmbeddingsCompatibleProvider
 from .base import EmbeddingModel, EmbedInputType
 from .result import EmbeddingResult

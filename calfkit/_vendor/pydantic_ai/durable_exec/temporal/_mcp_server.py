@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic_ai import ToolsetTool
-from pydantic_ai.mcp import MCPServer
-from pydantic_ai.tools import AgentDepsT, ToolDefinition
 from temporalio.workflow import ActivityConfig
+
+from ... import ToolsetTool
+from ...mcp import MCPServer
+from ...tools import AgentDepsT, ToolDefinition
 
 from ._mcp import TemporalMCPToolset
 from ._run_context import TemporalRunContext

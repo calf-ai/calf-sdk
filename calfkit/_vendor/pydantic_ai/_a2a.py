@@ -1,5 +1,4 @@
-from __future__ import annotations
-from __future__ import annotations as _annotations
+from __future__ import annotations, annotations as _annotations
 
 import uuid
 from collections.abc import AsyncIterator, Sequence
@@ -27,6 +26,7 @@ from . import (
     UserPromptPart,
     VideoUrl,
 )
+
 from .agent import AbstractAgent, AgentDepsT, OutputDataT
 
 # AgentWorker output type needs to be invariant for use in both parameter and return positions
@@ -44,8 +44,6 @@ try:
         Skill,
         TaskIdParams,
         TaskSendParams,
-    )
-    from fasta2a.schema import (
         TextPart as A2ATextPart,
     )
     from fasta2a.storage import InMemoryStorage, Storage

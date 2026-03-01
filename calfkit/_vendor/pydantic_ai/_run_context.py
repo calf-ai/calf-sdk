@@ -10,9 +10,9 @@ from typing import TYPE_CHECKING, Any, Generic
 from opentelemetry.trace import NoOpTracer, Tracer
 from typing_extensions import TypeVar
 
-from . import _utils
-from . import messages as _messages
 from ._instrumentation import DEFAULT_INSTRUMENTATION_VERSION
+
+from . import _utils, messages as _messages
 
 from .usage import RunUsage
 

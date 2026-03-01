@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from pydantic_ai import ToolsetTool
-from pydantic_ai.mcp import MCPServer
-from pydantic_ai.tools import AgentDepsT, ToolDefinition
+from ... import ToolsetTool
+from ...mcp import MCPServer
+from ...tools import AgentDepsT, ToolDefinition
 
 from ._mcp import DBOSMCPToolset
 from ._utils import StepConfig

@@ -13,9 +13,9 @@ from pydantic._internal._typing_extra import get_function_type_hints
 from pydantic_core import SchemaValidator, to_json
 from typing_extensions import Self, TypedDict, TypeVar
 
-from . import _function_schema, _utils
-from . import messages as _messages
 from ._instrumentation import InstrumentationNames
+
+from . import _function_schema, _utils, messages as _messages
 from ._run_context import AgentDepsT, RunContext
 from .exceptions import ModelRetry, ToolRetryError, UserError
 from .output import (

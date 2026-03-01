@@ -4,12 +4,13 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Any, Literal
 
-from pydantic_ai import ToolsetTool
-from pydantic_ai.exceptions import UserError
-from pydantic_ai.tools import AgentDepsT, RunContext, ToolDefinition
-from pydantic_ai.toolsets import AbstractToolset
 from temporalio import activity, workflow
 from temporalio.workflow import ActivityConfig
+
+from ... import ToolsetTool
+from ...exceptions import UserError
+from ...tools import AgentDepsT, RunContext, ToolDefinition
+from ...toolsets import AbstractToolset
 
 from ._run_context import TemporalRunContext
 from ._toolset import (

@@ -3,8 +3,7 @@ from dataclasses import KW_ONLY, dataclass, field
 from datetime import datetime
 from typing import Any, Literal
 
-from genai_prices import calc_price
-from genai_prices import types as genai_types
+from genai_prices import calc_price, types as genai_types
 
 from .._utils import now_utc as _now_utc
 from ..usage import RequestUsage

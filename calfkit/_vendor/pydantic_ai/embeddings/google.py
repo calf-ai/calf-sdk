@@ -5,6 +5,7 @@ from typing import Literal, cast
 from ..exceptions import ModelHTTPError, UnexpectedModelBehavior
 from ..providers import Provider, infer_provider
 from ..usage import RequestUsage
+
 from .base import EmbeddingModel, EmbedInputType
 from .result import EmbeddingResult
 from .settings import EmbeddingSettings

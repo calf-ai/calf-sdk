@@ -41,7 +41,7 @@ class CombinedToolset(AbstractToolset[AgentDepsT]):
 
     @property
     def label(self) -> str:
-        return f"{self.__class__.__name__}({', '.join(toolset.label for toolset in self.toolsets)})"  # pragma: no cover
+        return f'{self.__class__.__name__}({", ".join(toolset.label for toolset in self.toolsets)})'  # pragma: no cover
 
     async def __aenter__(self) -> Self:
         async with self._enter_lock:
@@ -61,20 +61,16 @@ class CombinedToolset(AbstractToolset[AgentDepsT]):
                 self._exit_stack = None
 
     async def get_tools(self, ctx: RunContext[AgentDepsT]) -> dict[str, ToolsetTool[AgentDepsT]]:
-        toolsets_tools = await asyncio.gather(
-            *(toolset.get_tools(ctx) for toolset in self.toolsets)
-        )
+        toolsets_tools = await asyncio.gather(*(toolset.get_tools(ctx) for toolset in self.toolsets))
         all_tools: dict[str, ToolsetTool[AgentDepsT]] = {}
 
         for toolset, tools in zip(self.toolsets, toolsets_tools):
             for name, tool in tools.items():
                 tool_toolset = tool.toolset
                 if existing_tool := all_tools.get(name):
-                    capitalized_toolset_label = (
-                        tool_toolset.label[0].upper() + tool_toolset.label[1:]
-                    )
+                    capitalized_toolset_label = tool_toolset.label[0].upper() + tool_toolset.label[1:]
                     raise UserError(
-                        f"{capitalized_toolset_label} defines a tool whose name conflicts with existing tool from {existing_tool.toolset.label}: {name!r}. {toolset.tool_name_conflict_hint}"
+                        f'{capitalized_toolset_label} defines a tool whose name conflicts with existing tool from {existing_tool.toolset.label}: {name!r}. {toolset.tool_name_conflict_hint}'
                     )
 
                 all_tools[name] = _CombinedToolsetTool(
@@ -88,11 +84,7 @@ class CombinedToolset(AbstractToolset[AgentDepsT]):
         return all_tools
 
     async def call_tool(
-        self,
-        name: str,
-        tool_args: dict[str, Any],
-        ctx: RunContext[AgentDepsT],
-        tool: ToolsetTool[AgentDepsT],
+        self, name: str, tool_args: dict[str, Any], ctx: RunContext[AgentDepsT], tool: ToolsetTool[AgentDepsT]
     ) -> Any:
         assert isinstance(tool, _CombinedToolsetTool)
         return await tool.source_toolset.call_tool(name, tool_args, ctx, tool.source_tool)
@@ -104,6 +96,4 @@ class CombinedToolset(AbstractToolset[AgentDepsT]):
     def visit_and_replace(
         self, visitor: Callable[[AbstractToolset[AgentDepsT]], AbstractToolset[AgentDepsT]]
     ) -> AbstractToolset[AgentDepsT]:
-        return replace(
-            self, toolsets=[toolset.visit_and_replace(visitor) for toolset in self.toolsets]
-        )
+        return replace(self, toolsets=[toolset.visit_and_replace(visitor) for toolset in self.toolsets])

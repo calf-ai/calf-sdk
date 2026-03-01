@@ -26,16 +26,12 @@ class SchemaValidatorProt(Protocol):
         self,
         input: str | bytes | bytearray,
         *,
-        allow_partial: bool | Literal["off", "on", "trailing-strings"] = False,
+        allow_partial: bool | Literal['off', 'on', 'trailing-strings'] = False,
         **kwargs: Any,
     ) -> Any: ...
 
     def validate_python(
-        self,
-        input: Any,
-        *,
-        allow_partial: bool | Literal["off", "on", "trailing-strings"] = False,
-        **kwargs: Any,
+        self, input: Any, *, allow_partial: bool | Literal['off', 'on', 'trailing-strings'] = False, **kwargs: Any
     ) -> Any: ...
 
 
@@ -91,13 +87,13 @@ class AbstractToolset(ABC, Generic[AgentDepsT]):
         """The name of the toolset for use in error messages."""
         label = self.__class__.__name__
         if self.id:  # pragma: no branch
-            label += f" {self.id!r}"
+            label += f' {self.id!r}'
         return label
 
     @property
     def tool_name_conflict_hint(self) -> str:
         """A hint for how to avoid name conflicts with other toolsets for use in error messages."""
-        return "Rename the tool or wrap the toolset in a `PrefixedToolset` to avoid name conflicts."
+        return 'Rename the tool or wrap the toolset in a `PrefixedToolset` to avoid name conflicts.'
 
     async def __aenter__(self) -> Self:
         """Enter the toolset context.
@@ -120,11 +116,7 @@ class AbstractToolset(ABC, Generic[AgentDepsT]):
 
     @abstractmethod
     async def call_tool(
-        self,
-        name: str,
-        tool_args: dict[str, Any],
-        ctx: RunContext[AgentDepsT],
-        tool: ToolsetTool[AgentDepsT],
+        self, name: str, tool_args: dict[str, Any], ctx: RunContext[AgentDepsT], tool: ToolsetTool[AgentDepsT]
     ) -> Any:
         """Call a tool with the given arguments.
 
@@ -186,9 +178,9 @@ class AbstractToolset(ABC, Generic[AgentDepsT]):
 
     def approval_required(
         self,
-        approval_required_func: Callable[
-            [RunContext[AgentDepsT], ToolDefinition, dict[str, Any]], bool
-        ] = (lambda ctx, tool_def, tool_args: True),
+        approval_required_func: Callable[[RunContext[AgentDepsT], ToolDefinition, dict[str, Any]], bool] = (
+            lambda ctx, tool_def, tool_args: True
+        ),
     ) -> ApprovalRequiredToolset[AgentDepsT]:
         """Returns a new toolset that requires (some) calls to tools it contains to be approved.
 

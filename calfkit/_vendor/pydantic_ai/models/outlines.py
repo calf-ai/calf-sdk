@@ -50,13 +50,9 @@ from . import (
 
 try:
     from outlines.inputs import Chat, Image
-    from outlines.models.base import AsyncModel as OutlinesAsyncBaseModel
-    from outlines.models.base import Model as OutlinesBaseModel
+    from outlines.models.base import AsyncModel as OutlinesAsyncBaseModel, Model as OutlinesBaseModel
     from outlines.models.llamacpp import LlamaCpp, from_llamacpp
-    from outlines.models.mlxlm import (  # pyright: ignore[reportUnknownVariableType]
-        MLXLM,
-        from_mlxlm,
-    )
+    from outlines.models.mlxlm import MLXLM, from_mlxlm  # pyright: ignore[reportUnknownVariableType]
     from outlines.models.sglang import AsyncSGLang, SGLang, from_sglang
     from outlines.models.transformers import (
         Transformers,

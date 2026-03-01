@@ -5,14 +5,15 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from dbos import DBOS
-from pydantic_ai import AbstractToolset, ToolsetTool, WrapperToolset
-from pydantic_ai.tools import AgentDepsT, RunContext, ToolDefinition
 from typing_extensions import Self
+
+from ... import AbstractToolset, ToolsetTool, WrapperToolset
+from ...tools import AgentDepsT, RunContext, ToolDefinition
 
 from ._utils import StepConfig
 
 if TYPE_CHECKING:
-    from pydantic_ai.mcp import ToolResult
+    from ...mcp import ToolResult
 
 
 class DBOSMCPToolset(WrapperToolset[AgentDepsT], ABC):

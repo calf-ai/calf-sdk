@@ -21,8 +21,9 @@ from opentelemetry.trace import Span, SpanKind, Tracer, TracerProvider, get_trac
 from opentelemetry.util.types import AttributeValue
 from pydantic import TypeAdapter
 
-from .. import _otel_messages
 from .._instrumentation import DEFAULT_INSTRUMENTATION_VERSION
+
+from .. import _otel_messages
 from .._run_context import RunContext
 from ..messages import (
     ModelMessage,
