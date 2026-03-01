@@ -161,8 +161,8 @@ def test_class_registry_isolation():
 def test_chat_node_named_derives_topics():
     """Named ChatNode derives input/output topics from name."""
     chat = ChatNode(name="gpt-5-nano")
-    assert chat.subscribed_topic == "ai_prompted.gpt4o"
-    assert chat.publish_to_topic == "ai_generated.gpt4o"
+    assert chat.subscribed_topic == "ai_prompted.gpt-5-nano"
+    assert chat.publish_to_topic == "ai_generated.gpt-5-nano"
     assert chat.entrypoint_topic is None
 
 
@@ -179,13 +179,13 @@ def test_chat_node_explicit_input_topic_overrides_name():
     chat = ChatNode(name="gpt-5-nano", input_topic="custom.chat.in")
     assert chat.subscribed_topic == "custom.chat.in"
     # output_topic still derived from name
-    assert chat.publish_to_topic == "ai_generated.gpt4o"
+    assert chat.publish_to_topic == "ai_generated.gpt-5-nano"
 
 
 def test_chat_node_explicit_output_topic_overrides_name():
     """Explicit output_topic on ChatNode overrides the name-derived default."""
     chat = ChatNode(name="gpt-5-nano", output_topic="custom.chat.out")
-    assert chat.subscribed_topic == "ai_prompted.gpt4o"
+    assert chat.subscribed_topic == "ai_prompted.gpt-5-nano"
     assert chat.publish_to_topic == "custom.chat.out"
 
 

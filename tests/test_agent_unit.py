@@ -456,8 +456,8 @@ def test_deps_round_trip_on_envelope():
 def test_named_chat_node_input_topic():
     """Named ChatNode should subscribe to a private input topic derived from name."""
     chat = ChatNode(name="gpt-5-nano")
-    assert chat.subscribed_topic == "ai_prompted.gpt4o"
-    assert chat.publish_to_topic == "ai_generated.gpt4o"
+    assert chat.subscribed_topic == "ai_prompted.gpt-5-nano"
+    assert chat.publish_to_topic == "ai_generated.gpt-5-nano"
     assert chat.entrypoint_topic is None
 
 
