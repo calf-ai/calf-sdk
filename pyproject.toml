@@ -48,7 +48,10 @@ dependencies = [
     "anthropic>=0.80.0",
     "typing-extensions>=4.15.0",
     "dishka>=1.9.1",
-    "mcp>=1.27.2",
+    # Capped below 2.0: mcp 2.0 renamed the camelCase model fields (`Tool.inputSchema` ->
+    # `Tool.input_schema`) and swapped httpx for httpx2, breaking `mcp/mcp_toolbox.py` and
+    # `mcp/mcp_transport.py`. Lift the cap in the 2.0 migration.
+    "mcp>=1.27.2,<2",
     "ktables>=2.0.0",
     # CLI (`ck`): typer powers the console script, watchfiles powers `ck run --reload`.
     "typer>=0.12",
@@ -143,7 +146,10 @@ dev = [
     "pytest-cov>=7.1.0",
     "pytest-timeout>=2.4.0",
     "rich>=14.3.2",
-    "ruff>=0.14.11",
+    # Capped below 0.16: 0.16.0 taught `ruff format` to format Python code blocks inside
+    # Markdown, which reformats 15 committed docs — and mangles snippets that are
+    # deliberate fragments. Lift the cap once those docs are reflowed.
+    "ruff>=0.14.11,<0.16",
     "temporalio>=1.23.0",
 ]
 examples = [
