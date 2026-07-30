@@ -1,7 +1,7 @@
 <h1 align="center">🐮 Calfkit</h1>
 
 <h3 align="center">
-  Build decentralized multi-agent systems. Agents discover each other at runtime, choreograph work, and scale as independent, event-driven services.
+  Build agents that discover each other at runtime, choreograph work, and scale as independent, event-driven services.
 </h3>
 
 <p align="center">
