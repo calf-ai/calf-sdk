@@ -41,8 +41,8 @@ class FakeSession:
 
 def make_tools() -> list[Tool]:
     return [
-        Tool(name="search", description="Search the docs", inputSchema={"type": "object", "properties": {"q": {"type": "string"}}}),
-        Tool(name="fetch", inputSchema={"type": "object", "properties": {}}),
+        Tool(name="search", description="Search the docs", input_schema={"type": "object", "properties": {"q": {"type": "string"}}}),
+        Tool(name="fetch", input_schema={"type": "object", "properties": {}}),
     ]
 
 
@@ -128,7 +128,7 @@ class TestCapabilityFactory:
 
         # A genuine tool-set change advances it.
         await asyncio.sleep(0.005)
-        session._tools = [Tool(name="new_tool", inputSchema={"type": "object", "properties": {}})]
+        session._tools = [Tool(name="new_tool", input_schema={"type": "object", "properties": {}})]
         await toolbox._refresh_tools(session)
         after = toolbox._capability_record(make_stamp())
         assert after.content_updated_at > before
@@ -159,7 +159,7 @@ class TestListChanged:
         toolbox.resources[toolbox._session_resource_key] = session
         await toolbox._refresh_tools(session)  # prime as session setup would
 
-        session._tools = [Tool(name="new_tool", inputSchema={"type": "object", "properties": {}})]
+        session._tools = [Tool(name="new_tool", input_schema={"type": "object", "properties": {}})]
         await toolbox._mcp_message_handler(ToolListChangedNotification(method="notifications/tools/list_changed"))
         for _ in range(100):
             if toolbox._last_tools and toolbox._last_tools[0].name == "new_tool":

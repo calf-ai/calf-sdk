@@ -44,7 +44,7 @@ class FakeSession:
         self._tool_names = tool_names
 
     async def list_tools(self) -> ListToolsResult:
-        return ListToolsResult(tools=[Tool(name=n, description=n, inputSchema={"type": "object", "properties": {}}) for n in self._tool_names])
+        return ListToolsResult(tools=[Tool(name=n, description=n, input_schema={"type": "object", "properties": {}}) for n in self._tool_names])
 
 
 class FakeModel(PydanticModelClient):

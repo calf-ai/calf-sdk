@@ -48,10 +48,16 @@ dependencies = [
     "anthropic>=0.80.0",
     "typing-extensions>=4.15.0",
     "dishka>=1.9.1",
-    # Capped below 2.0: mcp 2.0 renamed the camelCase model fields (`Tool.inputSchema` ->
-    # `Tool.input_schema`) and swapped httpx for httpx2, breaking `mcp/mcp_toolbox.py` and
-    # `mcp/mcp_transport.py`. Lift the cap in the 2.0 migration.
-    "mcp>=1.27.2,<2",
+    # Floor at 2.0: the 2.0 model fields are snake_case (`Tool.input_schema`) and the
+    # HTTP stack is httpx2, neither of which 1.x provides — `mcp/mcp_toolbox.py` and
+    # `mcp/mcp_transport.py` require both. Capped below 3 so the next major arrives as
+    # its own reviewable Dependabot PR rather than inside an unrelated one.
+    "mcp>=2.0.0,<3",
+    # httpx2 is the HTTP stack mcp 2.0 exposes: `create_mcp_http_client` returns an
+    # `httpx2.AsyncClient` and `StreamableHttpParameters.auth` is an `httpx2.Auth`.
+    # Already in the locked closure via genai-prices, so declaring it is install-free —
+    # it is a direct, load-bearing import here, not an incidental transitive.
+    "httpx2>=2.5.0",
     "ktables>=2.0.0",
     # CLI (`ck`): typer powers the console script, watchfiles powers `ck run --reload`.
     "typer>=0.12",
