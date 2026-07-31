@@ -1,8 +1,12 @@
 version: 2
 
 updates:
-  # Python dependencies (pip/uv)
-  - package-ecosystem: "pip"
+  # Python dependencies. `uv` (not `pip`) is the ecosystem that understands
+  # uv.lock — under `pip` Dependabot only reads pyproject.toml, so the `>=`
+  # floors there are satisfied by every new release and it proposes nothing.
+  # That is why the July 2026 ruff 0.16 / mcp 2.0 breakages arrived via an
+  # unrelated PR instead of a Dependabot PR.
+  - package-ecosystem: "uv"
     directory: "/"
     schedule:
       interval: "weekly"

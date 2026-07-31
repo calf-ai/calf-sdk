@@ -16,6 +16,12 @@ $ uv run pytest tests/       # run anything inside the project environment
 
 Run any project command through `uv run` so it uses the locked environment.
 
+`uv.lock` is committed, and CI installs from it with `uv sync --locked`. If you
+change anything under `[project.dependencies]` or `[dependency-groups]`, run
+`uv lock` and commit the updated lockfile in the same PR — otherwise CI fails
+with the lock reported as stale. Routine dependency bumps arrive as their own
+Dependabot PRs, so you should not need to refresh the lock by hand otherwise.
+
 ## Quality gates
 
 Before opening a PR, make sure these pass — CI runs the same checks:

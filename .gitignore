@@ -37,9 +37,6 @@ Thumbs.db
 # Ruff
 .ruff_cache/
 
-# uv
-uv.lock
-
 # env file
 .env
 
