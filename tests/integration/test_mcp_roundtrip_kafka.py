@@ -709,7 +709,7 @@ async def test_mcp_bad_args_rejected_before_dispatch_then_corrected(
 
     by_id = returns_by_call_id(result.message_history)
     # The bad call was rejected caller-side (calfkit's json_schema_violation — NOT a server-side
-    # FastMCP validation error, which would prove the server was contacted).
+    # server-side validation error, which would prove the server was contacted).
     surfaced_bad = f"{by_id.get('bad', '')} {' '.join(retry_prompt_texts(result.message_history))}"
     assert "json_schema_violation" in surfaced_bad, f"expected a caller-side schema violation, got: {surfaced_bad!r}"
     # The corrected call round-tripped through the real server.

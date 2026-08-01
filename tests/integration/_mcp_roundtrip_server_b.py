@@ -7,9 +7,9 @@ selectors), so two servers exposing the same name would collide. Distinct names
 let a test prove each call routed to the correct server.
 """
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server import MCPServer
 
-mcp = FastMCP("roundtrip-test-server-b")
+mcp = MCPServer("roundtrip-test-server-b")
 
 
 @mcp.tool()
