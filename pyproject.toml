@@ -51,7 +51,7 @@ dependencies = [
     # Capped below 2.0: mcp 2.0 renamed the camelCase model fields (`Tool.inputSchema` ->
     # `Tool.input_schema`) and swapped httpx for httpx2, breaking `mcp/mcp_toolbox.py` and
     # `mcp/mcp_transport.py`. Lift the cap in the 2.0 migration.
-    "mcp>=1.27.2,<2",
+    "mcp>=1.27.2,<3",
     "ktables>=2.0.0",
     # CLI (`ck`): typer powers the console script, watchfiles powers `ck run --reload`.
     "typer>=0.12",
