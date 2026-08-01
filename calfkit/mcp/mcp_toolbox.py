@@ -110,7 +110,7 @@ class MCPToolboxNode(BaseNodeDef):
         aborts boot.
         """
         listing = await session.list_tools()
-        tools = [CapabilityToolDef(name=tool.name, description=tool.description, parameters_json_schema=tool.inputSchema) for tool in listing.tools]
+        tools = [CapabilityToolDef(name=tool.name, description=tool.description, parameters_json_schema=tool.input_schema) for tool in listing.tools]
         if tools != self._last_tools:
             self._last_tools = tools
             self._tools_changed_at = datetime.now(tz=timezone.utc)

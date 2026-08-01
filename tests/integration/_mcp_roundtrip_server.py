@@ -1,6 +1,6 @@
 """A minimal, self-contained MCP server for the real-broker roundtrip test.
 
-Built on the *real* ``mcp`` package (``mcp.server.fastmcp.FastMCP``) and
+Built on the *real* ``mcp`` package (``mcp.server.MCPServer``) and
 deliberately free of any ``calfkit`` or vendored-pydantic-ai imports, so the
 test exercises a genuine external MCP server rather than a stub. The
 :class:`~calfkit.mcp.MCPToolboxNode` spawns this module as a subprocess over stdio
@@ -13,9 +13,10 @@ argument arities a real toolbox must handle: multi-arg (:func:`add`), single-arg
 (:func:`echo`), and no-arg (:func:`ping`).
 """
 
-from mcp.server.fastmcp import Context, FastMCP
+from mcp.server import MCPServer
+from mcp.server.mcpserver import Context
 
-mcp = FastMCP("roundtrip-test-server")
+mcp = MCPServer("roundtrip-test-server")
 
 
 @mcp.tool()
@@ -45,7 +46,7 @@ def danger() -> str:
 
 @mcp.tool()
 def domain_error() -> str:
-    """Raise a domain error → FastMCP returns a ``CallToolResult`` with ``isError=True``
+    """Raise a domain error → the server returns a ``CallToolResult`` with ``isError=True``
     (a model-visible failure by MCP convention). calfkit passes this through transparently
     as an ordinary return — NOT the fault rail (the temporary PR-6 behavior)."""
     raise ValueError("domain failure")
