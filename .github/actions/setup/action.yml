@@ -1,8 +1,13 @@
 name: "Setup Python and uv"
 description: >-
   Set up Python and uv (with caching), then optionally sync uv dependency
-  groups. Assumes the repository is already checked out (a local composite
-  action cannot run before checkout).
+  groups from the committed uv.lock. Assumes the repository is already checked
+  out (a local composite action cannot run before checkout).
+
+  The sync is `--locked`: it installs exactly what uv.lock pins and fails if
+  the lock is stale relative to pyproject.toml, so CI is reproducible and a
+  forgotten `uv lock` surfaces here rather than as a mystery failure in an
+  unrelated PR.
 
 inputs:
   python-version:
@@ -28,6 +33,11 @@ runs:
       uses: astral-sh/setup-uv@v7
       with:
         enable-cache: true
+        # Stated rather than inherited: the default flipped from true to false in
+        # setup-uv v9, so leaving it implicit means a routine major bump silently
+        # stops pruning and starts caching pre-built wheels that are usually
+        # faster to rebuild on GitHub-hosted runners than to restore.
+        prune-cache: true
 
     - name: Sync dependencies
       if: ${{ inputs.groups != '' }}
@@ -39,4 +49,4 @@ runs:
         for group in $GROUPS; do
           args+=(--group "$group")
         done
-        uv sync "${args[@]}"
+        uv sync --locked "${args[@]}"

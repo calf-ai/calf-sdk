@@ -45,6 +45,28 @@ jobs:
       - name: Mypy
         run: uv run mypy calfkit/
 
+  lockfile:
+    name: Lockfile up to date
+    runs-on: ubuntu-latest
+
+    # The one job that asserts uv.lock still matches pyproject.toml, on its own
+    # rather than as a side effect of another job's `uv sync --locked`. It has to
+    # be its own gate: `uv run` silently re-locks a stale lockfile and exits 0, so
+    # any job that skips the sync (see `build`, which passes groups: "") would run
+    # green against a lock that was never committed. Checking it once, directly,
+    # cannot be lost the way a per-job flag can.
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Python and uv
+        uses: ./.github/actions/setup
+        with:
+          groups: "" # `uv lock --check` reads the files; it needs no synced venv
+
+      - name: Check uv.lock matches pyproject.toml
+        run: uv lock --check
+
   test:
     name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest

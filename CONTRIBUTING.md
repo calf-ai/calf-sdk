@@ -16,6 +16,29 @@ $ uv run pytest tests/       # run anything inside the project environment
 
 Run any project command through `uv run` so it uses the locked environment.
 
+### The lockfile
+
+`uv.lock` is committed, and CI installs from it with `uv sync --locked`. A
+dedicated "Lockfile up to date" job fails the build if the lock has drifted from
+`pyproject.toml`.
+
+`uv add` and `uv remove` update the lock for you. You only need to run `uv lock`
+by hand after editing dependency declarations directly — that means
+`[project.dependencies]`, `[project.optional-dependencies]`, and
+`[dependency-groups]`, and also `requires-python`, which feeds resolution.
+Commit the updated lockfile in the same PR.
+
+One trap worth knowing: `uv run` re-locks silently. If you edit a dependency and
+run `make check`, it will pass locally — uv quietly refreshes the lock — and then
+CI fails on the lockfile job because you never committed that refresh. If a check
+passes locally but the lockfile job is red, this is why; `git status` will show
+`uv.lock` dirty.
+
+Routine dependency bumps arrive as their own Dependabot PRs, so you should not
+need to refresh the lock by hand otherwise. If one of those conflicts with your
+branch, regenerate rather than hand-merging the lock: take the incoming
+`pyproject.toml`, then re-run `uv lock`.
+
 ## Quality gates
 
 Before opening a PR, make sure these pass — CI runs the same checks:

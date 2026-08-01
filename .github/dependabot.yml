@@ -1,8 +1,13 @@
 version: 2
 
 updates:
-  # Python dependencies (pip/uv)
-  - package-ecosystem: "pip"
+  # Python dependencies. `uv` (not `pip`) is the ecosystem that reads uv.lock:
+  # `pip` fetches pyproject.toml, requirements.txt, poetry.lock and Pipfile.lock
+  # but never uv.lock, so it only ever saw the `>=` floors here — which every new
+  # release satisfies, so it proposed nothing. That is why the July 2026
+  # ruff 0.16 / mcp 2.0 breakages arrived via an unrelated PR instead of a
+  # Dependabot one.
+  - package-ecosystem: "uv"
     directory: "/"
     schedule:
       interval: "weekly"
@@ -12,7 +17,17 @@ updates:
       - "dependencies"
       - "python"
     commit-message:
-      prefix: "deps"
+      # `build`, not `deps`: PR titles inherit this prefix, and pr-title.yml
+      # only allows the Conventional Commits types release-please parses —
+      # `deps` is not one of them, so every generated PR would fail that check.
+      prefix: "build"
+    # Pinned, not inherited. Dependabot's default strategy is auto-detected, and
+    # it classifies this project as a library (it compares the PyPI summary to
+    # `project.description`, which match) — for libraries the default is `widen`,
+    # which would BROADEN a capped range rather than raise its floor. That would
+    # silently strip the deliberate `mcp<2` / `ruff<0.16` caps. `increase` keeps
+    # proposals inside the declared bounds.
+    versioning-strategy: "increase"
     groups:
       python-minor:
         patterns:
@@ -21,9 +36,15 @@ updates:
           - "minor"
           - "patch"
 
-  # GitHub Actions
+  # GitHub Actions. Two directories, not one: `/` covers .github/workflows and a
+  # root action.yml, but NOT the composite at .github/actions/setup — which is
+  # where uv and Python are actually installed for every lane. That blind spot is
+  # observable in history: 7fffc5c bumped actions/setup-python to v7 across the
+  # workflows while the composite stayed on v6.
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directories:
+      - "/"
+      - "/.github/actions/setup"
     schedule:
       interval: "weekly"
       day: "monday"
