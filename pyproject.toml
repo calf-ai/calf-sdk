@@ -149,7 +149,7 @@ dev = [
     # Capped below 0.16: 0.16.0 taught `ruff format` to format Python code blocks inside
     # Markdown, which reformats 15 committed docs — and mangles snippets that are
     # deliberate fragments. Lift the cap once those docs are reflowed.
-    "ruff>=0.14.11,<0.16",
+    "ruff>=0.14.11,<0.17",
     "temporalio>=1.23.0",
 ]
 examples = [
