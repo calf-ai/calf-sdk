@@ -36,9 +36,15 @@ updates:
           - "minor"
           - "patch"
 
-  # GitHub Actions
+  # GitHub Actions. Two directories, not one: `/` covers .github/workflows and a
+  # root action.yml, but NOT the composite at .github/actions/setup — which is
+  # where uv and Python are actually installed for every lane. That blind spot is
+  # observable in history: 7fffc5c bumped actions/setup-python to v7 across the
+  # workflows while the composite stayed on v6.
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directories:
+      - "/"
+      - "/.github/actions/setup"
     schedule:
       interval: "weekly"
       day: "monday"
