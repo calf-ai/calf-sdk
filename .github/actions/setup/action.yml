@@ -33,6 +33,11 @@ runs:
       uses: astral-sh/setup-uv@v7
       with:
         enable-cache: true
+        # Stated rather than inherited: the default flipped from true to false in
+        # setup-uv v9, so leaving it implicit means a routine major bump silently
+        # stops pruning and starts caching pre-built wheels that are usually
+        # faster to rebuild on GitHub-hosted runners than to restore.
+        prune-cache: true
 
     - name: Sync dependencies
       if: ${{ inputs.groups != '' }}
