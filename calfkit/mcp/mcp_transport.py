@@ -1,3 +1,17 @@
+"""Transport constructors for the MCP client sessions calfkit drives.
+
+Two imports below reach into private ``mcp`` modules, which is deliberate rather
+than overlooked. mcp 2.0 publishes no other path to either: the HTTP-client
+factory and its recommended timeout defaults live only in
+``mcp.shared._httpx_utils``, and ``TransportStreams`` only in
+``mcp.client._transport`` (upstream carries a TODO to relocate it). The
+alternatives are worse — re-declaring the stream tuple would name element types
+that are *also* private, and owning copies of the timeout defaults would silently
+drift from MCP's recommendations. Importing the real definitions keeps the
+coupling visible and lets a version bump fail loudly at import rather than
+subtly at runtime.
+"""
+
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
