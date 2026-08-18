@@ -1,5 +1,7 @@
 [project]
 name = "calfkit"
+# Version is release-please-managed: the manifest holds the source of truth and the
+# release PR patches $.project.version here (see release-please-config.json extra-files).
 version = "0.13.0"
 description = "A framework to build powerful AI agent teams."
 readme = "README.md"
@@ -20,144 +22,15 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 
-dependencies = [
-    # Upper-bounded: calfkit/_faststream_ext/ extends faststream._internal subscriber
-    # machinery (see that package's docstring); canary tests in
-    # tests/unit/faststream_ext/test_upstream_seams.py verify every touched seam, so a
-    # deliberate bump past 0.8 must re-run them, not discover breakage in production.
-    "faststream[kafka]>=0.7.1,<0.8",
-    "pydantic>=2.12.5",
-    "python-dotenv>=1.2.1",
-    "uuid-utils>=0.14.0",
-    # Vendored pydantic-ai dependencies (from pydantic-ai-slim v1.47.0)
-    "httpx>=0.27",
-    # griffe pinned to >=2.0: griffe 1.15.0 ships a broken wheel with no
-    # top-level __init__.py, causing `from griffe import Docstring` in
-    # calfkit/_vendor/pydantic_ai/_griffe.py to fail. griffe 2.x restores the
-    # symbol and is API-compatible with the vendored code.
-    "griffe>=2.0,<3",
-    "typing-inspection>=0.4.0",
-    "opentelemetry-api>=1.28.0",
-    "genai-prices>=0.0.48",
-    # Capped to <2: the vendored pydantic-ai imports `pydantic_graph.beta`,
-    # which 2.0.0 removed (makes calfkit unimportable).
-    "pydantic-graph>=1.47.0,<2",
-    "exceptiongroup>=1.2.2; python_version < '3.11'",
-    # Provider SDKs
-    "openai>=1.0.0",
-    "anthropic>=0.80.0",
-    "typing-extensions>=4.15.0",
-    "dishka>=1.9.1",
-    # Capped below 2.0: mcp 2.0 renamed the camelCase model fields (`Tool.inputSchema` ->
-    # `Tool.input_schema`) and swapped httpx for httpx2, breaking `mcp/mcp_toolbox.py` and
-    # `mcp/mcp_transport.py`. Lift the cap in the 2.0 migration.
-    "mcp>=1.27.2,<2",
-    "ktables>=2.0.0",
-    # CLI (`ck`): typer powers the console script, watchfiles powers `ck run --reload`.
-    "typer>=0.12",
-    "watchfiles>=0.21",
-    # Caller-side tool-arg validation: the Draft 2020-12 reference implementation, used to
-    # compile a runtime validator from a discovered tool's advertised `parameters_json_schema`.
-    # Floor >=4.18 is the first `referencing`-based release (stable `$ref` resolution); already
-    # in the locked closure as a hard dep of `mcp`, so this direct declaration is install-free.
-    "jsonschema>=4.18",
-]
+# Born-new cutover: the legacy implementation lives on branch `legacy/0.13`.
+# Dependencies arrive with the implementation, section by section.
+dependencies = []
 
 [project.urls]
 Homepage = "https://github.com/calf-ai/calfkit-sdk"
 Repository = "https://github.com/calf-ai/calfkit-sdk"
 Issues = "https://github.com/calf-ai/calfkit-sdk/issues"
 
-[project.scripts]
-# Top-level `ck` CLI (the calfkit SDK's command-line tool). Mounts the `topics`
-# (provision) subcommand and the `run` command. Its deps (typer, watchfiles)
-# ship in the core install, so `ck` is available right after `pip install calfkit`.
-ck = "calfkit.cli:main"
-
-[project.optional-dependencies]
-# The bundled local dev-mesh broker is opt-in (ADR-0031): `calfkit-mesh` ships the Tansu binary +
-# locator (own semver; the wrapped Tansu version lives in its metadata), and `psutil` gives the
-# `ck dev` supervisor its process-table ownership scan. Both live ONLY here, so a core
-# `pip install calfkit` stays pure-Python and no production install carries the broker binary.
-mesh = ["calfkit-mesh>=0.1.2", "psutil>=5.9"]
-
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["calfkit"]
-
-[tool.ruff]
-target-version = "py310"
-line-length = 150
-exclude = ["calfkit/_vendor"]
-
-[tool.ruff.lint]
-select = ["E", "F", "I", "N", "W", "UP"]
-
-[tool.mypy]
-python_version = "3.10"
-strict = true
-warn_return_any = true
-warn_unused_ignores = true
-exclude = ["calfkit/_vendor"]
-
-# calfkit_mesh ships no py.typed: absent (core install / CI) it is import-not-found, installed
-# (local kafka-lane runs) it is import-untyped — an inline ignore can only ever match one of the
-# two under warn_unused_ignores, so the suppression lives here, env-independent.
-[[tool.mypy.overrides]]
-module = "calfkit_mesh"
-ignore_missing_imports = true
-
-# jsonschema ships no py.typed; its published stubs (types-jsonschema) are a separate package the
-# project does not vendor. Suppress here rather than inline, matching the calfkit_mesh precedent
-# (env-independent under warn_unused_ignores).
-[[tool.mypy.overrides]]
-module = "jsonschema.*"
-ignore_missing_imports = true
-
-[tool.coverage.run]
-omit = ["calfkit/_vendor/*"]
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-testpaths = ["tests"]
-# --strict-markers: an unregistered marker is an error, not a silent no-op.
-# -m "not kafka and not live": external-dependency tests are OPT-IN, one
-# orthogonal marker per dependency (ADR 0007). They are deselected by default so
-# a bare `pytest` / `make test` never needs Docker, a network, or credentials.
-# Run a lane with `-m kafka` (`make test-kafka`) or `-m live` (`make test-live`),
-# whose CLI -m overrides this default selection. A test needing both carries both
-# markers (and is then selected by either lane).
-addopts = ["--strict-markers", "-m", "not kafka and not live"]
-markers = [
-    "kafka: requires a real Kafka/Redpanda broker (testcontainers-managed unless CALF_TEST_KAFKA_BOOTSTRAP names an external broker)",
-    "live: requires a real model API (set OPENAI_API_KEY and TEST_LLM_MODEL_NAME); main-only CI lane, never on PRs",
-]
-
-[dependency-groups]
-dev = [
-    "faker>=40.12.0",
-    "fastapi>=0.129.0",
-    "mypy>=1.19.1",
-    "pytest>=9.0.2",
-    "pytest-asyncio>=1.3.0",
-    "pytest-cov>=7.1.0",
-    "pytest-timeout>=2.4.0",
-    "rich>=14.3.2",
-    # Capped below 0.16: 0.16.0 taught `ruff format` to format Python code blocks inside
-    # Markdown, which reformats 15 committed docs — and mangles snippets that are
-    # deliberate fragments. Lift the cap once those docs are reflowed.
-    "ruff>=0.14.11,<0.16",
-    "temporalio>=1.23.0",
-]
-examples = [
-    "plotext>=5.3.2",
-    "sympy>=1.13",
-    "websockets>=16.0",
-]
-integration = [
-    "pytest-xdist>=3.6",
-    "testcontainers[kafka]>=4.14.2",
-]
+requires = ["uv_build>=0.9.22,<0.10.0"]
+build-backend = "uv_build"
