@@ -1,9 +1,5 @@
 .PHONY: help check lint-check format-check type-check import-check fix lint-fix format-fix build build-wheel clean
 
-# Born-new window: the test targets return with the implementation (pytest is
-# not yet a dependency of the new package).
-
-# Default target
 help:
 	@echo "Available commands:"
 	@echo ""
@@ -23,8 +19,6 @@ help:
 	@echo "    make build        - Build sdist and wheel"
 	@echo "    make build-wheel  - Build wheel only"
 	@echo "    make clean        - Remove build artifacts"
-
-# === Checks ===
 
 check: lint-check format-check type-check import-check
 	@echo "✓ All checks passed"
@@ -49,8 +43,6 @@ import-check:
 	@uv run --group lint lint-imports
 	@echo "✓ Import contracts kept"
 
-# === Fixes ===
-
 fix: lint-fix format-fix
 	@echo "✓ All auto-fixes applied"
 
@@ -63,8 +55,6 @@ format-fix:
 	@echo "Formatting code..."
 	@uv run --group dev ruff format .
 	@echo "✓ Format fixes applied"
-
-# === Build ===
 
 build: clean
 	@echo "Building sdist and wheel..."

@@ -1,7 +1,6 @@
 [project]
 name = "calfkit"
-# Version is release-please-managed: the manifest holds the source of truth and the
-# release PR patches $.project.version here (see release-please-config.json extra-files).
+# release-please patches this field (see release-please-config.json extra-files)
 version = "0.13.0"
 description = "A framework to build powerful AI agent teams."
 readme = "README.md"
@@ -22,8 +21,6 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 
-# Born-new cutover: the legacy implementation lives on branch `legacy/0.13`.
-# Dependencies arrive with the implementation, section by section.
 dependencies = []
 
 [project.urls]
@@ -45,24 +42,16 @@ lint = ["import-linter>=2.13"]
 [tool.ruff]
 target-version = "py310"
 line-length = 150
-# Legacy-era Markdown (README/CONTRIBUTING/docs) predates the born-new window;
-# ruff >=0.16 formats Python code blocks inside Markdown and would mangle
-# deliberate fragments (the reason the legacy project capped ruff <0.16).
-# Revisit when the docs are reborn.
+# ruff >=0.16 reformats Python code blocks inside Markdown; the docs hold
+# deliberate fragments
 extend-exclude = ["*.md"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 
-# ty (Astral's type checker — Ryan-ruled over mypy for the born-new SDK).
-# Pin analysis to the support floor so 3.10 users never see un-flagged breakage.
 [tool.ty.environment]
 python-version = "3.10"
 
-# ── Import contracts (layout v2, design-log block 52) ─────────────────────────
-# These encode the sketch's per-section "depends on:" annotations as CI-enforced
-# rules. layers/forbidden are transitive; `protected` pins each heavy SDK to its
-# single adapter module (activated as the adapters land).
 [tool.importlinter]
 root_packages = ["calfkit"]
 include_external_packages = true
@@ -119,10 +108,8 @@ source_modules = [
 ]
 forbidden_modules = ["calfkit.adapters"]
 
-# ── SOLE-IMPORTER contracts (ruled; STAGED) ──────────────────────────────────
-# A `protected` contract on an external module ERRORS while that module appears
-# nowhere in the import graph ("not present in the graph"), so these activate
-# with the first adapter that imports each SDK — uncomment alongside that PR:
+# Sole-importer contracts: uncomment each as its adapter lands — a `protected`
+# contract errors while its external module is absent from the import graph.
 #
 # [[tool.importlinter.contracts]]
 # name = "litellm is imported only by its adapter"
