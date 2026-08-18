@@ -34,3 +34,95 @@ Issues = "https://github.com/calf-ai/calfkit-sdk/issues"
 [build-system]
 requires = ["uv_build>=0.9.22,<0.10.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+lint = ["import-linter>=2.13"]
+
+# ── Import contracts (layout v2, design-log block 52) ─────────────────────────
+# These encode the sketch's per-section "depends on:" annotations as CI-enforced
+# rules. layers/forbidden are transitive; `protected` pins each heavy SDK to its
+# single adapter module (activated as the adapters land).
+[tool.importlinter]
+root_packages = ["calfkit"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Layered architecture — the sketch's dependency order"
+type = "layers"
+layers = [
+    "calfkit.worker",
+    "calfkit._processors",
+    "calfkit._hosting",
+    "calfkit._wire",
+    "calfkit._drive",
+    "calfkit._surface",
+    "calfkit._capabilities",
+    "calfkit._engine | calfkit._carriage | calfkit._projection | calfkit._policy",
+    "calfkit.definitions",
+    "calfkit.hooks | calfkit.lifecycle",
+    "calfkit.providers",
+    "calfkit.models",
+    "calfkit.ports | calfkit.mcp",
+    "calfkit.context",
+    "calfkit.schemas",
+    "calfkit.messages | calfkit.streaming",
+    "calfkit.errors",
+]
+
+[[tool.importlinter.contracts]]
+name = "The core never imports adapters"
+type = "forbidden"
+source_modules = [
+    "calfkit.messages",
+    "calfkit.streaming",
+    "calfkit.errors",
+    "calfkit.schemas",
+    "calfkit.context",
+    "calfkit.ports",
+    "calfkit.mcp",
+    "calfkit.models",
+    "calfkit.providers",
+    "calfkit.hooks",
+    "calfkit.lifecycle",
+    "calfkit.definitions",
+    "calfkit._engine",
+    "calfkit._carriage",
+    "calfkit._projection",
+    "calfkit._policy",
+    "calfkit._surface",
+    "calfkit._capabilities",
+    "calfkit._drive",
+    "calfkit._wire",
+    "calfkit._hosting",
+    "calfkit._processors",
+]
+forbidden_modules = ["calfkit.adapters"]
+
+# ── SOLE-IMPORTER contracts (ruled; STAGED) ──────────────────────────────────
+# A `protected` contract on an external module ERRORS while that module appears
+# nowhere in the import graph ("not present in the graph"), so these activate
+# with the first adapter that imports each SDK — uncomment alongside that PR:
+#
+# [[tool.importlinter.contracts]]
+# name = "litellm is imported only by its adapter"
+# type = "protected"
+# protected_modules = ["litellm"]
+# allowed_importers = ["calfkit.adapters.litellm"]
+#
+# [[tool.importlinter.contracts]]
+# name = "the mcp SDK is imported only by its adapter"
+# type = "protected"
+# protected_modules = ["mcp"]
+# allowed_importers = ["calfkit.adapters.mcp"]
+#
+# [[tool.importlinter.contracts]]
+# name = "aiokafka/faststream are imported only by the kafka adapters"
+# type = "protected"
+# protected_modules = ["aiokafka", "faststream"]
+# allowed_importers = ["calfkit.adapters.kafka"]
+#
+# [[tool.importlinter.contracts]]
+# name = "httpx stays out of the pure center"
+# type = "protected"
+# protected_modules = ["httpx"]
+# allowed_importers = ["calfkit.providers", "calfkit.adapters"]

@@ -1,0 +1,38 @@
+name: Import rules
+
+# Enforces the born-new architecture's import contracts (layout v2, adopted
+# 2026-08-18): the layered dependency order from the durable-agent sketch, the
+# core-never-imports-adapters rule, and — as each adapter lands — the
+# sole-importer contracts pinning every heavy SDK (litellm/mcp/aiokafka) to its
+# one adapter module. Contracts live in pyproject.toml [tool.importlinter];
+# layers/forbidden checks are TRANSITIVE (chains via intermediate modules are
+# caught, not just direct imports).
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  import-linter:
+    name: Import contracts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Python and dependencies
+        uses: ./.github/actions/setup
+        with:
+          groups: "lint"
+
+      - name: Check import contracts
+        run: uv run --group lint lint-imports
