@@ -36,7 +36,28 @@ requires = ["uv_build>=0.9.22,<0.10.0"]
 build-backend = "uv_build"
 
 [dependency-groups]
+dev = [
+    "ruff>=0.16.3",
+    "ty>=0.0.72",
+]
 lint = ["import-linter>=2.13"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 150
+# Legacy-era Markdown (README/CONTRIBUTING/docs) predates the born-new window;
+# ruff >=0.16 formats Python code blocks inside Markdown and would mangle
+# deliberate fragments (the reason the legacy project capped ruff <0.16).
+# Revisit when the docs are reborn.
+extend-exclude = ["*.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+# ty (Astral's type checker — Ryan-ruled over mypy for the born-new SDK).
+# Pin analysis to the support floor so 3.10 users never see un-flagged breakage.
+[tool.ty.environment]
+python-version = "3.10"
 
 # ── Import contracts (layout v2, design-log block 52) ─────────────────────────
 # These encode the sketch's per-section "depends on:" annotations as CI-enforced
