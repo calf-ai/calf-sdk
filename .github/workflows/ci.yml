@@ -1,14 +1,11 @@
 name: CI
 
-# Unified CI lane for the always-on checks that share the push-to-main / PR
-# trigger: lint + type-check, the test matrix, and a package build + cross-OS
-# install verification. The coverage entry (Python 3.10) additionally runs the
-# real-broker `kafka` lane via testcontainers Redpanda, so the uploaded coverage
-# is the union of the offline and real-broker tests — which is why that entry
-# needs the runner's Docker daemon. Lanes with divergent triggers or infra stay
-# in their own files: the topic-provisioning and live-LLM integration lanes;
-# security; release; pr-title. Shared Python+uv setup is factored into
-# .github/actions/setup.
+# Always-on checks sharing the push-to-main / PR trigger: lint + format +
+# types, import contracts, lockfile freshness, and a package build with
+# cross-OS install verification. The test matrix and the gated integration
+# lanes return with the implementation (pytest is not yet a dependency).
+# Lanes with divergent triggers stay in their own files: security, release,
+# pr-title. Shared Python+uv setup is factored into .github/actions/setup.
 
 on:
   push:
@@ -33,28 +30,38 @@ jobs:
 
       - name: Set up Python and dependencies
         uses: ./.github/actions/setup
-        with:
-          python-version: "3.10"
 
       - name: Ruff lint
-        run: uv run ruff check .
+        run: uv run --group dev ruff check .
 
       - name: Ruff format check
-        run: uv run ruff format --check .
+        run: uv run --group dev ruff format --check .
 
-      - name: Mypy
-        run: uv run mypy calfkit/
+      - name: ty type check
+        run: uv run --group dev ty check
+
+  imports:
+    name: Import contracts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Python and dependencies
+        uses: ./.github/actions/setup
+        with:
+          groups: "lint"
+
+      - name: Check import contracts
+        run: uv run --group lint lint-imports
 
   lockfile:
     name: Lockfile up to date
     runs-on: ubuntu-latest
 
-    # The one job that asserts uv.lock still matches pyproject.toml, on its own
-    # rather than as a side effect of another job's `uv sync --locked`. It has to
-    # be its own gate: `uv run` silently re-locks a stale lockfile and exits 0, so
-    # any job that skips the sync (see `build`, which passes groups: "") would run
-    # green against a lock that was never committed. Checking it once, directly,
-    # cannot be lost the way a per-job flag can.
+    # Its own gate: `uv run` silently re-locks a stale lockfile and exits 0,
+    # so a stale uv.lock can only be caught by checking it directly.
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -67,58 +74,6 @@ jobs:
       - name: Check uv.lock matches pyproject.toml
         run: uv lock --check
 
-  test:
-    name: Python ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Set up Python and dependencies
-        uses: ./.github/actions/setup
-        with:
-          python-version: ${{ matrix.python-version }}
-          # `integration` adds testcontainers for the real-broker lane the
-          # coverage entry runs; unused (harmless) on the offline-only entries.
-          groups: "dev integration"
-
-      - name: Run tests
-        # Non-coverage entries run the offline suite only (FunctionModel +
-        # in-memory TestKafkaBroker; the default `-m "not kafka and not live"`),
-        # needing no Docker, network, or credentials. The coverage entry (3.10)
-        # also runs the real-broker `kafka` lane (Redpanda via testcontainers,
-        # ADR 0007) as a SECOND pytest run whose coverage is appended
-        # (`--cov-append`) to the offline run's, so the uploaded number stays the
-        # union of both. That kafka run is parallel (`-n auto` on ONE shared
-        # broker) and scoped to `tests/integration` so the xdist controller
-        # registers the shared-broker hook (see tests/integration/conftest.py).
-        # Broker size/worker count are env-tunable (CALF_TEST_REDPANDA_SMP/_MEMORY,
-        # KAFKA_XDIST) if a runner contends. The live lane runs separately
-        # (integration-live.yml).
-        run: |
-          if [ "${{ matrix.python-version }}" = "3.10" ]; then
-            uv run pytest tests/ -m "not kafka and not live" --tb=short --timeout=180 \
-              --cov=calfkit --cov-report=
-            uv run --group integration pytest tests/integration -m kafka -n auto --tb=short --timeout=180 \
-              --cov=calfkit --cov-append --cov-report=term-missing --cov-report=xml
-          else
-            uv run pytest tests/ -v --tb=short
-          fi
-
-      - name: Upload coverage to Codecov
-        if: matrix.python-version == '3.10'
-        uses: codecov/codecov-action@v7
-        with:
-          files: ./coverage.xml
-          fail_ci_if_error: true
-          token: ${{ secrets.CODECOV_TOKEN }}
-
   build:
     name: Build package
     runs-on: ubuntu-latest
@@ -130,7 +85,6 @@ jobs:
       - name: Set up Python and uv
         uses: ./.github/actions/setup
         with:
-          python-version: "3.10"
           groups: "" # `uv build` needs no synced venv
 
       - name: Build sdist and wheel
@@ -173,4 +127,5 @@ jobs:
         shell: bash
 
       - name: Verify import
-        run: python -c "import calfkit; print(f'calfkit {calfkit.__version__} installed successfully')"
+        run: python -c "import calfkit; from importlib.metadata import version; print(f'calfkit {version(\"calfkit\")} installed successfully')"
+        shell: bash
