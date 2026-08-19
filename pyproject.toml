@@ -34,6 +34,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "pytest>=9.1.1",
     "ruff>=0.16.3",
     "ty>=0.0.72",
 ]
@@ -50,6 +51,14 @@ extend-exclude = ["*.md"]
 select = ["E", "F", "I", "N", "W", "UP"]
 extend-select = ["ANN", "PYI"]
 preview = true
+
+[tool.pytest]
+minversion = "9.0"
+testpaths = ["tests"]
+# importlib is the recommended import mode for new projects (pytest good
+# practices); tests/ carries no __init__.py files
+addopts = ["--import-mode=importlib"]
+strict = true
 
 [tool.ty.environment]
 python-version = "3.10"
