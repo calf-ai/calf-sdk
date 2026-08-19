@@ -90,7 +90,7 @@ Now ask a finance question in `ck dev chat` — `general` discovers `finance` at
 
 Calfkit agents discover and communicate over a mesh.
 
-**For local dev**, the bundled in-memory broker (via `[mesh]` extra) is zero-setup — see [How to run a local mesh with `ck dev`](docs/local-dev-mesh.md).
+**For local dev**, the bundled in-memory broker (via `[mesh]` extra) is zero-setup — see [How to run a local mesh with `ck dev`](https://github.com/calf-ai/calfkit-sdk/blob/legacy/0.13/docs/local-dev-mesh.md).
 
 **In production**, the mesh is Kafka-compatible so you can drop your agent swarms into production-ready Kafka streaming infrastructure you already use.
 
@@ -98,7 +98,7 @@ Want a fully-managed mesh your agents can join from anywhere? [Join the beta](ht
 
 ## Documentation
 
-* **Getting started**: See [`docs/`](docs/).
+* **Getting started**: The docs for the last released version (0.13) live on the [`legacy/0.13` branch](https://github.com/calf-ai/calfkit-sdk/tree/legacy/0.13/docs). Docs for the rewrite are being written from scratch.
 * **Examples**: See [`examples/`](examples/) — multi-agent team and general framework API examples.
 
 ## Contributing
