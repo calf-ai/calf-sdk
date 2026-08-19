@@ -44,8 +44,7 @@ lint = ["import-linter>=2.13"]
 target-version = "py310"
 line-length = 150
 # ruff >=0.16 reformats Python code blocks inside Markdown; the docs hold
-# deliberate fragments. `.agents/` holds agent skill definitions, not project
-# code — the scripts vendored in there follow their upstream's conventions.
+# deliberate fragments
 extend-exclude = ["*.md", ".agents"]
 
 [tool.ruff.lint]
@@ -62,7 +61,6 @@ addopts = ["--import-mode=importlib"]
 strict = true
 
 [tool.ty.src]
-# See the ruff note above: `.agents/` is skill definitions, not project code.
 exclude = [".agents"]
 
 [tool.ty.environment]
