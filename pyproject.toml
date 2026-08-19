@@ -1,7 +1,7 @@
 [project]
 name = "calfkit"
 # release-please patches this field (see release-please-config.json extra-files)
-version = "0.13.0"
+version = "0.14.0"
 description = "A framework to build powerful AI agent teams."
 readme = "README.md"
 license = "Apache-2.0"
