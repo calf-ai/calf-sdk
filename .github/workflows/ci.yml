@@ -1,11 +1,11 @@
 name: CI
 
 # Always-on checks sharing the push-to-main / PR trigger: lint + format +
-# types, import contracts, lockfile freshness, and a package build with
-# cross-OS install verification. The test matrix and the gated integration
-# lanes return with the implementation (pytest is not yet a dependency).
-# Lanes with divergent triggers stay in their own files: security, release,
-# pr-title. Shared Python+uv setup is factored into .github/actions/setup.
+# types, import contracts, the test matrix, lockfile freshness, and a package
+# build with cross-OS install verification. The gated integration lanes
+# (real-broker kafka, live LLM) return with the implementation. Lanes with
+# divergent triggers stay in their own files: security, release, pr-title.
+# Shared Python+uv setup is factored into .github/actions/setup.
 
 on:
   push:
@@ -55,6 +55,27 @@ jobs:
 
       - name: Check import contracts
         run: uv run --group lint lint-imports
+
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Python and dependencies
+        uses: ./.github/actions/setup
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run tests
+        run: uv run --group dev pytest
 
   lockfile:
     name: Lockfile up to date

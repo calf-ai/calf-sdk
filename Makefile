@@ -1,4 +1,4 @@
-.PHONY: help check lint-check format-check type-check import-check fix lint-fix format-fix build build-wheel clean
+.PHONY: help check lint-check format-check type-check import-check test fix lint-fix format-fix build build-wheel clean
 
 help:
 	@echo "Available commands:"
@@ -9,6 +9,7 @@ help:
 	@echo "    make format-check - Check code formatting (ruff format --check)"
 	@echo "    make type-check   - Run type checker (ty)"
 	@echo "    make import-check - Check import contracts (import-linter)"
+	@echo "    make test         - Run tests (pytest)"
 	@echo ""
 	@echo "  Fixes:"
 	@echo "    make fix          - Fix all auto-fixable issues (lint + format)"
@@ -42,6 +43,11 @@ import-check:
 	@echo "Checking import contracts..."
 	@uv run --group lint lint-imports
 	@echo "✓ Import contracts kept"
+
+test:
+	@echo "Running tests..."
+	@uv run --group dev pytest
+	@echo "✓ Tests passed"
 
 fix: lint-fix format-fix
 	@echo "✓ All auto-fixes applied"
