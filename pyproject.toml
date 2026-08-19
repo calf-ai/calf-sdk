@@ -45,7 +45,7 @@ target-version = "py310"
 line-length = 150
 # ruff >=0.16 reformats Python code blocks inside Markdown; the docs hold
 # deliberate fragments
-extend-exclude = ["*.md"]
+extend-exclude = ["*.md", ".agents"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
@@ -59,6 +59,9 @@ testpaths = ["tests"]
 # practices); tests/ carries no __init__.py files
 addopts = ["--import-mode=importlib"]
 strict = true
+
+[tool.ty.src]
+exclude = [".agents"]
 
 [tool.ty.environment]
 python-version = "3.10"

@@ -183,5 +183,7 @@ mode, auto-create on) does not provide. Those tests live in
 purpose-configured broker — keep new real-broker tests in the `kafka` lane
 unless they specifically need auto-create off.
 
-For the rationale behind this opt-in, marker-gated structure, see
-[ADR 0007](docs/adr/0007-external-dependency-tests-opt-in-via-orthogonal-markers.md).
+Every lane that needs something outside the repo — a broker, a model provider —
+is opt-in and selected by its own marker. The markers are orthogonal, so a lane
+can be run or skipped on its own, and a contributor with none of those
+dependencies still gets a clean `make test`.
