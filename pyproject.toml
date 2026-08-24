@@ -29,7 +29,7 @@ Repository = "https://github.com/calf-ai/calfkit-sdk"
 Issues = "https://github.com/calf-ai/calfkit-sdk/issues"
 
 [build-system]
-requires = ["uv_build>=0.9.22,<0.10.0"]
+requires = ["uv_build>=0.9.22,<0.13.0"]
 build-backend = "uv_build"
 
 [dependency-groups]
